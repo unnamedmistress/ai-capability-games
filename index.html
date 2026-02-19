@@ -3,15 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI Capability Atlas — Learning Games</title>
+  <title>AI Capability Atlas - Gamified Learning</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: white; }
-    .game-card { transition: all 0.3s ease; }
-    .game-card:hover { transform: translateY(-4px); }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: white; }
+    .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%); }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .spinning { animation: spin 2s linear infinite; }
   </style>
@@ -21,288 +20,254 @@
   <script>
     const { createElement: h, useState, useEffect, useRef } = React;
 
-    const capabilities = [
-      { id: 'explain', name: 'Explain Complex Concepts', category: 'Learn', desc: 'Break down topics', level: 'Novice', icon: '📚' },
-      { id: 'summarize', name: 'Summarize Texts', category: 'Research', desc: 'Condense content', level: 'Novice', icon: '📝' },
-      { id: 'brainstorm', name: 'Brainstorm Ideas', category: 'Create', desc: 'Generate concepts', level: 'Novice', icon: '💡' },
-      { id: 'compare', name: 'Compare Options', category: 'Decide', desc: 'Evaluate choices', level: 'Competent', icon: '⚖️' },
-      { id: 'clarity', name: 'Improve Clarity', category: 'Improve', desc: 'Make text clear', level: 'Novice', icon: '✨' },
-      { id: 'analyze', name: 'Analyze Arguments', category: 'Research', desc: 'Evaluate logic', level: 'Competent', icon: '🔍' },
-      { id: 'stories', name: 'Generate Stories', category: 'Create', desc: 'Create narratives', level: 'Competent', icon: '📖' },
-      { id: 'solve', name: 'Solve Problems', category: 'Solve', desc: 'Find solutions', level: 'Proficient', icon: '🧩' }
+    // Learning Content
+    const domains = [
+      { id: 'knowledge', name: 'Knowledge & Learning', icon: '📚', color: 'blue', desc: 'Understanding mode - acquire, process, and apply information', skills: ['Explain Complex Concepts', 'Summarize Texts', 'Research & Verification', 'Fact-Checking'] },
+      { id: 'creativity', name: 'Creativity & Content', icon: '✨', color: 'pink', desc: 'Generative mode - generate novel ideas, art, and content', skills: ['Brainstorm Ideas', 'Draft Content', 'Transform Content', 'Edit & Refine'] },
+      { id: 'analysis', name: 'Analysis & Problem Solving', icon: '🧩', color: 'green', desc: 'Analytical mode - analyze complex problems and optimize solutions', skills: ['Compare Options', 'Evaluate Risk', 'Decompose Problems', 'Build Workflows'] }
     ];
 
-    function Navigation({ currentGame, setGame }) {
-      const games = [
-        { id: 'home', label: '🏠 Home' },
-        { id: 'labyrinth', label: '🪞 Labyrinth' },
-        { id: 'codex', label: '📖 Codex' },
-        { id: 'progressorium', label: '⚙️ Progress' },
-        { id: 'wheel', label: '🎰 Wheel' }
-      ];
-      return h('nav', { className: 'bg-gray-900/90 border-b border-white/10 sticky top-0 z-50' },
-        h('div', { className: 'max-w-7xl mx-auto px-4' },
-          h('div', { className: 'flex items-center justify-between h-16 overflow-x-auto' },
-            h('div', { className: 'flex space-x-1' },
-              games.map(g => h('button', {
-                key: g.id,
-                onClick: () => setGame(g.id),
-                className: `px-3 py-2 text-sm rounded-lg whitespace-nowrap transition-colors ${
-                  currentGame === g.id ? 'bg-pink-600 text-white' : 'text-gray-300 hover:text-pink-400'
-                }`
-              }, g.label))
-            )
-          )
-        )
-      );
-    }
+    const skillLadder = [
+      { level: 'Novice', icon: '🌱', desc: 'Follows rules without context. Copy/paste prompts, one-step tasks.', next: 'Add verification + SPEC prompting' },
+      { level: 'Competent', icon: '⚔️', desc: 'Understands context, applies rules flexibly. Iterates, adds constraints.', next: 'Add evaluation rubric + bias checks' },
+      { level: 'Proficient', icon: '👑', desc: 'Intuitively grasps patterns, adapts strategies. Chooses capability stack.', next: 'Metacognition + strategy + test harness' }
+    ];
 
-    function Hero({ setGame }) {
-      const games = [
-        { id: 'labyrinth', title: '🪞 Labyrinth', desc: 'Navigate the decision tree', color: 'pink' },
-        { id: 'codex', title: '📖 Celestial Codex', desc: 'Draw constellations', color: 'blue' },
-        { id: 'progressorium', title: '⚙️ Progressorium', desc: 'Grow your skills', color: 'amber' },
-        { id: 'wheel', title: '🎰 Wheel of Misfortune', desc: 'Fate decides', color: 'green' }
-      ];
-      const colors = { pink: 'from-pink-600/20 to-pink-800/20 border-pink-500/30', blue: 'from-blue-600/20 to-blue-800/20 border-blue-500/30', amber: 'from-amber-600/20 to-amber-800/20 border-amber-500/30', green: 'from-green-600/20 to-green-800/20 border-green-500/30' };
-      
-      return h('div', { className: 'min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-8' },
-        h('div', { className: 'text-center max-w-4xl mx-auto pt-12' },
-          h('h1', { className: 'text-5xl md:text-7xl font-bold mb-4' },
-            h('span', { className: 'text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400' }, 'AI Capability Atlas')
-          ),
-          h('p', { className: 'text-xl text-gray-300 mb-12' }, 'Discover AI capabilities through play'),
-          h('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
-            games.map(g => h('div', {
-              key: g.id,
-              onClick: () => setGame(g.id),
-              className: `game-card cursor-pointer bg-gradient-to-br ${colors[g.color]} border rounded-2xl p-8`
-            },
-              h('h3', { className: 'text-2xl font-bold text-white mb-2' }, g.title),
-              h('p', { className: 'text-gray-400 mb-4' }, g.desc),
-              h('span', { className: 'text-pink-400 font-medium' }, 'Play Now →')
-            ))
-          )
-        )
-      );
-    }
+    const questions = [
+      { q: 'Which domain focuses on generating novel ideas and content?', options: ['Knowledge & Learning', 'Creativity & Content', 'Analysis & Problem Solving'], correct: 1 },
+      { q: 'What does SPEC stand for?', options: ['Situation, Purpose, Expectations, Constraints', 'System, Process, Evaluation, Control', 'Structure, Pattern, Example, Check'], correct: 0 },
+      { q: 'Which skill level intuitively grasps patterns?', options: ['Novice', 'Competent', 'Proficient'], correct: 2 },
+      { q: 'Which layer of the Capability Stack includes "Draft" and "Brainstorm"?', options: ['Foundation', 'Synthesis', 'Creation'], correct: 2 }
+    ];
 
-    function Labyrinth() {
-      const svgRef = useRef(null);
-      const [selected, setSelected] = useState(null);
+    const badges = [
+      { name: 'Novice Explorer', icon: '🌱', points: 100, criteria: 'Complete 3 lessons' },
+      { name: 'Domain Explorer', icon: '🔍', points: 300, criteria: 'Complete 6 lessons' },
+      { name: 'AI Practitioner', icon: '⚔️', points: 700, criteria: 'Score 80%+ on quiz' },
+      { name: 'Capability Expert', icon: '🏆', points: 1500, criteria: 'Master all 3 domains' },
+      { name: 'Atlas Master', icon: '👑', points: 3000, criteria: 'Complete all challenges' }
+    ];
 
-      useEffect(() => {
-        if (!svgRef.current) return;
-        const svg = d3.select(svgRef.current);
-        svg.selectAll('*').remove();
-        
-        const treeData = {
-          name: 'AI Capabilities',
-          children: [
-            { name: 'Learn', children: capabilities.filter(c => c.category === 'Learn').map(c => ({ name: c.name, cap: c })) },
-            { name: 'Research', children: capabilities.filter(c => c.category === 'Research').map(c => ({ name: c.name, cap: c })) },
-            { name: 'Create', children: capabilities.filter(c => c.category === 'Create').map(c => ({ name: c.name, cap: c })) },
-            { name: 'Decide', children: capabilities.filter(c => c.category === 'Decide').map(c => ({ name: c.name, cap: c })) }
-          ]
-        };
+    function App() {
+      const [view, setView] = useState('home');
+      const [progress, setProgress] = useState({ lessons: [], score: 0, badges: [] });
+      const [currentLesson, setCurrentLesson] = useState(null);
+      const [quizAnswers, setQuizAnswers] = useState({});
+      const [showResults, setShowResults] = useState(false);
 
-        const root = d3.hierarchy(treeData);
-        d3.tree().size([300, 500])(root);
-
-        svg.selectAll('.link').data(root.links()).enter().append('path')
-          .attr('fill', 'none').attr('stroke', '#ec4899').attr('stroke-width', 2)
-          .attr('d', d3.linkHorizontal().x(d => d.y).y(d => d.x));
-
-        const nodes = svg.selectAll('.node').data(root.descendants()).enter().append('g')
-          .attr('transform', d => `translate(${d.y},${d.x})`)
-          .style('cursor', 'pointer')
-          .on('click', (e, d) => { if (d.data.cap) setSelected(d.data.cap); });
-
-        nodes.append('circle').attr('r', d => d.data.cap ? 20 : 15).attr('fill', '#7c3aed').attr('stroke', '#ec4899').attr('stroke-width', 2);
-        nodes.append('text').attr('dy', '.35em').attr('x', d => d.children ? -25 : 25).attr('text-anchor', d => d.children ? 'end' : 'start')
-          .text(d => d.data.name).attr('fill', 'white').attr('font-size', '11px');
-      }, []);
-
-      return h('div', { className: 'min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 p-4 md:p-8' },
-        h('h1', { className: 'text-3xl font-bold text-center mb-4 text-pink-400' }, '🪞 Labyrinth of Mirrors'),
-        h('p', { className: 'text-center text-gray-400 mb-8' }, 'Click nodes to discover capabilities'),
-        h('div', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-6xl mx-auto' },
-          h('div', { className: 'lg:col-span-2 bg-gray-800/50 rounded-2xl p-4 overflow-x-auto' },
-            h('svg', { ref: svgRef, width: 700, height: 400, className: 'w-full' })
-          ),
-          h('div', { className: 'bg-gray-800/50 rounded-2xl p-6' },
-            selected ? h('div', { className: 'text-center' },
-              h('div', { className: 'text-5xl mb-4' }, selected.icon),
-              h('h2', { className: 'text-xl font-bold text-pink-400 mb-2' }, selected.name),
-              h('span', { className: 'px-3 py-1 bg-purple-600/30 rounded-full text-sm' }, selected.category),
-              h('p', { className: 'text-gray-300 mt-4' }, selected.desc)
-            ) : h('div', { className: 'text-center text-gray-500 py-12' }, 'Click a mirror node')
-          )
-        )
-      );
-    }
-
-    function CelestialCodex() {
-      const canvasRef = useRef(null);
-      const [stars, setStars] = useState([]);
-      const [lines, setLines] = useState([]);
-      const [selected, setSelected] = useState(null);
-
-      useEffect(() => {
-        const newStars = capabilities.slice(0, 6).map((cap, i) => ({
-          id: i, x: 100 + (i % 3) * 200, y: 100 + Math.floor(i / 3) * 150, cap
-        }));
-        setStars(newStars);
-      }, []);
-
-      useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        lines.forEach(([s1, s2]) => {
-          ctx.strokeStyle = '#ec4899';
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.moveTo(s1.x, s1.y);
-          ctx.lineTo(s2.x, s2.y);
-          ctx.stroke();
-        });
-
-        stars.forEach((star, i) => {
-          const isSelected = selected === star;
-          ctx.fillStyle = isSelected ? '#ec4899' : '#7c3aed';
-          ctx.beginPath();
-          ctx.arc(star.x, star.y, isSelected ? 20 : 15, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.font = '20px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(star.cap.icon, star.x, star.y);
-        });
-      }, [stars, lines, selected]);
-
-      const handleClick = (e) => {
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-        
-        const clicked = stars.find(s => Math.sqrt((s.x - x) ** 2 + (s.y - y) ** 2) < 25);
-        if (clicked) {
-          if (selected && selected.id !== clicked.id) {
-            setLines([...lines, [selected, clicked]]);
-          }
-          setSelected(clicked);
+      const completeLesson = (id, pts) => {
+        if (!progress.lessons.includes(id)) {
+          setProgress(p => ({ ...p, lessons: [...p.lessons, id], score: p.score + pts }));
         }
       };
 
-      return h('div', { className: 'min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 p-4 md:p-8' },
-        h('h1', { className: 'text-3xl font-bold text-center mb-4 text-blue-400' }, '📖 Celestial Codex'),
-        h('p', { className: 'text-center text-gray-400 mb-4' }, 'Click stars to connect them'),
-        selected && h('div', { className: 'text-center mb-4' },
-          h('span', { className: 'text-2xl mr-2' }, selected.cap.icon),
-          h('span', { className: 'text-xl text-blue-300' }, selected.cap.name)
-        ),
-        h('canvas', { 
-          ref: canvasRef, 
-          width: 650, 
-          height: 350, 
-          className: 'w-full max-w-3xl mx-auto bg-gray-800/50 rounded-2xl border border-white/10 cursor-pointer',
-          onClick: handleClick
-        })
+      const progressPercent = Math.min((progress.lessons.length / 12) * 100, 100);
+
+      return h('div', { className: 'min-h-screen gradient-bg' },
+        h(Nav, { view, setView, progress, progressPercent }),
+        view === 'home' && h(Home, { setView, progress, progressPercent }),
+        view === 'domains' && h(Domains, { setView, setCurrentLesson }),
+        view === 'lesson' && h(Lesson, { currentLesson, domains, setView, completeLesson }),
+        view === 'ladder' && h(Ladder, { skillLadder }),
+        view === 'quiz' && h(Quiz, { questions, quizAnswers, setQuizAnswers, showResults, setShowResults, completeLesson, progress }),
+        view === 'badges' && h(Badges, { badges, progress })
       );
     }
 
-    function Progressorium() {
-      const [active, setActive] = useState([]);
-      const skills = capabilities.slice(0, 4);
-
-      return h('div', { className: 'min-h-screen bg-gradient-to-br from-amber-900 via-orange-900 to-amber-950 p-4 md:p-8' },
-        h('h1', { className: 'text-3xl font-bold text-center mb-8 text-amber-300' }, '⚙️ Progressorium'),
-        h('div', { className: 'max-w-2xl mx-auto space-y-4' },
-          skills.map((cap, i) => h('div', {
-            key: cap.id,
-            onClick: () => setActive(a => a.includes(i) ? a : [...a, i]),
-            className: `p-6 rounded-xl border cursor-pointer transition-all ${
-              active.includes(i) 
-                ? 'bg-amber-600/30 border-amber-400' 
-                : 'bg-black/30 border-amber-600/30 hover:border-amber-500/50'
-            }`
-          },
-            h('div', { className: 'flex items-center gap-4' },
-              h('span', { className: 'text-3xl' }, cap.icon),
-              h('div', null,
-                h('h3', { className: 'text-lg font-bold text-amber-200' }, cap.name),
-                h('p', { className: 'text-amber-200/60 text-sm' }, cap.desc),
-                active.includes(i) && h('span', { className: 'text-green-400 text-sm' }, '✓ Activated')
-              )
+    function Nav({ view, setView, progress, progressPercent }) {
+      return h('nav', { className: 'bg-gray-900/90 border-b border-indigo-500/20 sticky top-0 z-50' },
+        h('div', { className: 'max-w-7xl mx-auto px-4' },
+          h('div', { className: 'flex items-center justify-between h-16' },
+            h('h1', { className: 'text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-pink-400 cursor-pointer', onClick: () => setView('home') }, 
+              '🎓 AI Capability Atlas'
+            ),
+            h('div', { className: 'flex items-center space-x-4' },
+              h('div', { className: 'hidden md:flex items-center bg-gray-800/50 rounded-lg px-3 py-1' },
+                h('span', { className: 'text-xs text-gray-400 mr-2' }, 'Progress:'),
+                h('div', { className: 'w-24 h-2 bg-gray-700 rounded-full' },
+                  h('div', { className: 'h-full bg-gradient-to-r from-indigo-500 to-pink-500 rounded-full', style: { width: `${progressPercent}%` } })
+                ),
+                h('span', { className: 'text-xs text-indigo-400 ml-2' }, `${Math.round(progressPercent)}%`)
+              ),
+              h('span', { className: 'text-sm text-pink-400' }, `🏆 ${progress.score} pts`)
             )
-          ))
-        ),
-        h('div', { className: 'mt-8 text-center' },
-          h('div', { className: 'text-amber-300' }, `Progress: ${active.length} / ${skills.length}`),
-          h('div', { className: 'w-64 h-2 bg-black/40 rounded-full mx-auto mt-2' },
-            h('div', { 
-              className: 'h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all',
-              style: { width: `${(active.length / skills.length) * 100}%` }
-            })
+          ),
+          h('div', { className: 'flex space-x-1 overflow-x-auto pb-2' },
+            [['home', '🏠 Home'], ['domains', '🌳 Domains'], ['ladder', '📈 Ladder'], ['quiz', '❓ Quiz'], ['badges', '🏅 Badges']].map(([v, l]) => 
+              h('button', { key: v, onClick: () => setView(v), className: `px-3 py-2 text-sm rounded-lg whitespace-nowrap ${view === v ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:text-indigo-400'}` }, l)
+            )
           )
         )
       );
     }
 
-    function WheelOfMisfortune() {
-      const [spinning, setSpinning] = useState(false);
-      const [result, setResult] = useState(null);
-      const [rotation, setRotation] = useState(0);
+    function Home({ setView, progress, progressPercent }) {
+      const acts = [
+        { act: 1, title: 'Foundation', desc: 'Learn the 3 core domains', complete: progress.lessons.length >= 4 },
+        { act: 2, title: 'Domain Mastery', desc: 'Deep dive into each domain', complete: progress.lessons.length >= 8 },
+        { act: 3, title: 'Integration', desc: 'Cross-domain challenges', complete: progress.lessons.length >= 12 }
+      ];
 
-      const spin = () => {
-        if (spinning) return;
-        setSpinning(true);
-        setResult(null);
-        const newRotation = rotation + 1800 + Math.random() * 360;
-        setRotation(newRotation);
-        setTimeout(() => {
-          setSpinning(false);
-          setResult(capabilities[Math.floor(Math.random() * capabilities.length)]);
-        }, 2000);
-      };
-
-      return h('div', { className: 'min-h-screen bg-black p-4 md:p-8 font-mono' },
-        h('h1', { className: 'text-3xl md:text-5xl font-bold text-center mb-8 text-green-500' }, '🎰 WHEEL OF MISFORTUNE'),
-        h('div', { className: 'text-center mb-8' },
-          h('div', { 
-            className: `w-48 h-48 mx-auto rounded-full border-4 border-green-500 flex items-center justify-center text-6xl mb-4 ${spinning ? 'spinning' : ''}`,
-            style: { transform: `rotate(${rotation}deg)` }
-          }, '🎯')
+      return h('div', { className: 'p-4 md:p-8 max-w-4xl mx-auto' },
+        h('div', { className: 'text-center mb-12' },
+          h('h1', { className: 'text-4xl md:text-6xl font-bold mb-4' },
+            h('span', { className: 'text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400' }, 'AI Capability Atlas')
+          ),
+          h('p', { className: 'text-xl text-gray-300 mb-8' }, 'Master AI Capabilities Through Play'),
+          h('p', { className: 'text-gray-400 max-w-2xl mx-auto' }, 'Navigate 3 core domains, climb the skill ladder from Novice to Proficient, and unlock achievements as you learn.')
         ),
-        h('button', { 
-          onClick: spin,
-          disabled: spinning,
-          className: 'px-8 py-4 bg-green-600 disabled:bg-green-800 text-black font-bold text-xl rounded-lg border-2 border-green-400 block mx-auto'
-        }, spinning ? 'SPINNING...' : 'SPIN THE WHEEL'),
-        result && h('div', { className: 'mt-8 max-w-md mx-auto bg-green-900/30 border-2 border-green-500 rounded-xl p-6 text-center' },
-          h('div', { className: 'text-5xl mb-4' }, result.icon),
-          h('h2', { className: 'text-2xl font-bold text-green-300' }, result.name),
-          h('p', { className: 'text-green-200/70 mt-2' }, result.desc)
+
+        h('div', { className: 'mb-12' },
+          h('h2', { className: 'text-2xl font-bold text-indigo-300 mb-6 text-center' }, 'Quest Progress'),
+          h('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-4' },
+            acts.map((a, i) => h('div', { key: i, className: `p-6 rounded-xl border-2 ${a.complete ? 'bg-green-900/20 border-green-500/50' : 'bg-indigo-900/20 border-indigo-500/30'}` },
+              h('div', { className: 'flex justify-between mb-2' },
+                h('span', { className: 'text-sm text-gray-400' }, `Act ${a.act}`),
+                a.complete && h('span', { className: 'text-green-400' }, '✓')
+              ),
+              h('h3', { className: 'text-xl font-bold mb-2' }, a.title),
+              h('p', { className: 'text-gray-400 text-sm' }, a.desc)
+            ))
+          )
+        ),
+
+        h('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+          h('div', { onClick: () => setView('domains'), className: 'cursor-pointer bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/30 rounded-2xl p-8 hover:scale-105 transition-transform' },
+            h('h3', { className: 'text-2xl font-bold text-indigo-300 mb-2' }, '🌳 Explore Domains'),
+            h('p', { className: 'text-gray-400 mb-4' }, 'Navigate Knowledge, Creativity, and Analysis domains'),
+            h('span', { className: 'text-indigo-400' }, 'Start Learning →')
+          ),
+          h('div', { onClick: () => setView('quiz'), className: 'cursor-pointer bg-gradient-to-br from-pink-600/20 to-purple-600/20 border border-pink-500/30 rounded-2xl p-8 hover:scale-105 transition-transform' },
+            h('h3', { className: 'text-2xl font-bold text-pink-300 mb-2' }, '❓ Take Quiz'),
+            h('p', { className: 'text-gray-400 mb-4' }, 'Test your knowledge and earn points'),
+            h('span', { className: 'text-pink-400' }, 'Start Quiz →')
+          )
         )
       );
     }
 
-    function App() {
-      const [game, setGame] = useState('home');
+    function Domains({ setView, setCurrentLesson }) {
+      return h('div', { className: 'p-4 md:p-8' },
+        h('h2', { className: 'text-3xl font-bold text-center mb-8 text-indigo-300' }, 'The 3 Core Domains'),
+        h('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto' },
+          domains.map(d => h('div', { 
+            key: d.id,
+            onClick: () => { setCurrentLesson(d); setView('lesson'); },
+            className: `cursor-pointer bg-gradient-to-br from-${d.color}-600/20 to-${d.color}-800/20 border border-${d.color}-500/30 rounded-2xl p-6 hover:scale-105 transition-transform`
+          },
+            h('div', { className: 'text-6xl mb-4 text-center' }, d.icon),
+            h('h3', { className: 'text-xl font-bold text-center mb-2' }, d.name),
+            h('p', { className: 'text-gray-400 text-sm text-center mb-4' }, d.desc),
+            h('ul', { className: 'space-y-1' }, d.skills.map(s => h('li', { key: s, className: 'text-sm text-gray-300 flex items-center' }, h('span', { className: 'mr-2 text-green-400' }, '✓'), s)))
+          ))
+        )
+      );
+    }
 
-      return h('div', null,
-        h(Navigation, { currentGame: game, setGame }),
-        game === 'home' && h(Hero, { setGame }),
-        game === 'labyrinth' && h(Labyrinth),
-        game === 'codex' && h(CelestialCodex),
-        game === 'progressorium' && h(Progressorium),
-        game === 'wheel' && h(WheelOfMisfortune)
+    function Lesson({ currentLesson, domains, setView, completeLesson }) {
+      if (!currentLesson) return h('div', { className: 'p-8 text-center' }, 'Select a domain first');
+      
+      return h('div', { className: 'p-4 md:p-8 max-w-3xl mx-auto' },
+        h('button', { onClick: () => setView('domains'), className: 'text-indigo-400 mb-4' }, '← Back'),
+        h('div', { className: 'bg-gray-800/50 rounded-2xl p-8' },
+          h('div', { className: 'text-center mb-6' },
+            h('span', { className: 'text-6xl' }, currentLesson.icon),
+            h('h2', { className: 'text-3xl font-bold mt-4 mb-2' }, currentLesson.name),
+            h('p', { className: 'text-gray-400' }, currentLesson.desc)
+          ),
+          h('h3', { className: 'text-xl font-bold text-pink-300 mb-4' }, 'Key Skills'),
+          h('ul', { className: 'grid grid-cols-1 md:grid-cols-2 gap-3 mb-8' },
+            currentLesson.skills.map(s => h('li', { key: s, className: 'bg-gray-700/30 p-3 rounded-lg flex items-center' }, h('span', { className: 'text-green-400 mr-2' }, '✓'), s))
+          ),
+          h('div', { className: 'flex gap-4' },
+            h('button', { onClick: () => { completeLesson(currentLesson.id, 20); setView('quiz'); }, className: 'flex-1 py-3 bg-indigo-600 rounded-lg font-bold' }, 'Take Quiz (+20 pts)'),
+            h('button', { onClick: () => { completeLesson(currentLesson.id, 10); setView('domains'); }, className: 'px-6 py-3 bg-gray-700 rounded-lg' }, 'Complete (+10 pts)')
+          )
+        )
+      );
+    }
+
+    function Ladder({ skillLadder }) {
+      return h('div', { className: 'p-4 md:p-8 max-w-3xl mx-auto' },
+        h('h2', { className: 'text-3xl font-bold text-center mb-8 text-indigo-300' }, '📈 Skill Ladder'),
+        h('p', { className: 'text-gray-400 text-center mb-8' }, 'Dreyfus Model - Skill Acquisition Framework'),
+        h('div', { className: 'space-y-6' },
+          skillLadder.map((level, i) => h('div', { key: i, className: 'bg-gray-800/50 rounded-2xl p-6 border-l-4 border-indigo-500' },
+            h('div', { className: 'flex items-start gap-4' },
+              h('span', { className: 'text-4xl' }, level.icon),
+              h('div', null,
+                h('h3', { className: 'text-xl font-bold text-indigo-300 mb-2' }, level.level),
+                h('p', { className: 'text-gray-300 mb-2' }, level.desc),
+                h('p', { className: 'text-sm text-green-400' }, `Next: ${level.next}`)
+              )
+            )
+          ))
+        )
+      );
+    }
+
+    function Quiz({ questions, quizAnswers, setQuizAnswers, showResults, setShowResults, completeLesson, progress }) {
+      const [current, setCurrent] = useState(0);
+      const q = questions[current];
+
+      const answer = (idx) => setQuizAnswers({ ...quizAnswers, [current]: idx });
+
+      const next = () => {
+        if (current < questions.length - 1) {
+          setCurrent(current + 1);
+        } else {
+          setShowResults(true);
+          const correct = Object.entries(quizAnswers).filter(([i, a]) => questions[parseInt(i)].correct === a).length;
+          const pts = correct === questions.length ? 30 : correct >= 3 ? 20 : 10;
+          completeLesson('quiz', pts);
+        }
+      };
+
+      if (showResults) {
+        const score = Object.entries(quizAnswers).filter(([i, a]) => questions[parseInt(i)].correct === a).length;
+        const pct = (score / questions.length) * 100;
+        return h('div', { className: 'p-4 md:p-8 max-w-2xl mx-auto' },
+          h('div', { className: 'bg-gray-800/50 rounded-2xl p-8 text-center' },
+            h('h2', { className: 'text-3xl font-bold mb-4' }, pct >= 80 ? '🎉 Excellent!' : pct >= 60 ? '👍 Good Job!' : '💪 Keep Learning!'),
+            h('p', { className: 'text-xl mb-2' }, `Score: ${score}/${questions.length} (${Math.round(pct)}%)`),
+            h('p', { className: 'text-gray-400 mb-6' }, `You earned ${pct >= 80 ? 30 : pct >= 60 ? 20 : 10} points!`),
+            h('button', { onClick: () => setShowResults(false), className: 'px-6 py-3 bg-indigo-600 rounded-lg' }, 'Back to Home')
+          )
+        );
+      }
+
+      return h('div', { className: 'p-4 md:p-8 max-w-2xl mx-auto' },
+        h('div', { className: 'mb-4' },
+          h('div', { className: 'flex justify-between text-sm text-gray-400 mb-2' }, h('span', null, `Question ${current + 1} of ${questions.length}`)),
+          h('div', { className: 'w-full h-2 bg-gray-700 rounded-full' }, h('div', { className: 'h-full bg-indigo-500 rounded-full', style: { width: `${((current + 1) / questions.length) * 100}%` } }))
+        ),
+        h('div', { className: 'bg-gray-800/50 rounded-2xl p-8' },
+          h('h3', { className: 'text-xl font-bold mb-6' }, q.q),
+          h('div', { className: 'space-y-3' }, q.options.map((opt, i) => h('button', {
+            key: i, onClick: () => answer(i),
+            className: `w-full p-4 text-left rounded-lg border-2 ${quizAnswers[current] === i ? 'border-indigo-500 bg-indigo-900/30' : 'border-gray-700'}`
+          }, opt))),
+          h('button', { onClick: next, disabled: quizAnswers[current] === undefined, className: 'w-full mt-6 py-3 bg-indigo-600 disabled:bg-gray-700 rounded-lg font-bold' },
+            current < questions.length - 1 ? 'Next →' : 'Finish'
+          )
+        )
+      );
+    }
+
+    function Badges({ badges, progress }) {
+      return h('div', { className: 'p-4 md:p-8 max-w-4xl mx-auto' },
+        h('h2', { className: 'text-3xl font-bold text-center mb-8 text-indigo-300' }, '🏅 Your Badges'),
+        h('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' },
+          badges.map((b, i) => {
+            const unlocked = progress.score >= b.points;
+            return h('div', { key: i, className: `p-6 rounded-2xl border-2 text-center ${unlocked ? 'bg-yellow-900/20 border-yellow-500/50' : 'bg-gray-800/30 border-gray-700 opacity-50'}` },
+              h('div', { className: 'text-6xl mb-4' }, b.icon),
+              h('h3', { className: 'text-xl font-bold mb-2' }, b.name),
+              h('p', { className: 'text-gray-400 text-sm mb-2' }, b.criteria),
+              h('span', { className: unlocked ? 'text-green-400' : 'text-gray-500' }, unlocked ? '✓ Unlocked!' : `${b.points} pts needed`)
+            );
+          })
+        )
       );
     }
 
