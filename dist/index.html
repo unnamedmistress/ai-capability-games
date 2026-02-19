@@ -6,7 +6,6 @@
   <title>AI Capability Atlas — Learning Games</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.production.min.js" crossorigin></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -25,1007 +24,240 @@
     }
   </script>
   <style>
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #1a1a2e; color: white; }
     .star-glow { animation: glow 2s ease-in-out infinite alternate; }
     @keyframes glow { from { filter: drop-shadow(0 0 5px #e94560); } to { filter: drop-shadow(0 0 20px #e94560); } }
     .gear-spin { animation: spin 10s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .wheel-spin { transition: transform 3s cubic-bezier(0.23, 1, 0.32, 1); }
   </style>
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useEffect, useRef, useCallback } = React;
-    const { BrowserRouter, Routes, Route, Link, useLocation } = ReactRouterDOM;
+  <script>
+    const { createElement: h, useState, useEffect, useRef } = React;
+    const { BrowserRouter, Routes, Route, Link } = ReactRouterDOM;
 
-    // All 71 Capabilities from AI Capability Atlas
     const capabilities = [
-      // Learn New Things
-      { id: 'explain', name: 'Explain Complex Concepts', category: 'Learn New Things', description: 'Break down complicated topics into understandable parts using analogies and simple language', level: 'Novice', icon: '📚' },
-      { id: 'factual', name: 'Answer Factual Questions', category: 'Learn New Things', description: 'Provide accurate information on specific topics', level: 'Novice', icon: '❓' },
-      { id: 'compare-concepts', name: 'Compare Concepts', category: 'Learn New Things', description: 'Highlight similarities and differences between ideas, objects, or approaches', level: 'Novice', icon: '⚖️' },
-      { id: 'examples', name: 'Provide Examples', category: 'Learn New Things', description: 'Illustrate concepts with concrete instances to make abstract ideas tangible', level: 'Novice', icon: '💎' },
-      { id: 'translate', name: 'Translate Across Domains', category: 'Learn New Things', description: 'Apply ideas from one field to another to deepen understanding', level: 'Competent', icon: '🌐' },
-      { id: 'teach', name: 'Teach Step-by-Step', category: 'Learn New Things', description: 'Guide through learning processes in sequential stages', level: 'Novice', icon: '🎓' },
-      
-      // Research & Analyze
-      { id: 'summarize', name: 'Summarize Long Texts', category: 'Research & Analyze', description: 'Condense lengthy articles, reports, or documents into key points', level: 'Novice', icon: '📝' },
-      { id: 'extract', name: 'Extract Key Points', category: 'Research & Analyze', description: 'Identify and isolate the most important information from content', level: 'Novice', icon: '🎯' },
-      { id: 'synthesize', name: 'Synthesize Sources', category: 'Research & Analyze', description: 'Combine information from different references into cohesive insights', level: 'Proficient', icon: '🔗' },
-      { id: 'themes', name: 'Identify Themes', category: 'Research & Analyze', description: 'Recognize recurring patterns, topics, or ideas across content', level: 'Competent', icon: '🎨' },
-      { id: 'arguments', name: 'Analyze Arguments', category: 'Research & Analyze', description: 'Evaluate logical structure, evidence, and reasoning in persuasive content', level: 'Competent', icon: '🔍' },
-      { id: 'credibility', name: 'Evaluate Credibility', category: 'Research & Analyze', description: 'Assess reliability, trustworthiness, and authority of sources', level: 'Competent', icon: '✓' },
-      
-      // Evaluate Information
-      { id: 'bias', name: 'Detect Bias', category: 'Evaluate Information', description: 'Identify slanted perspectives, prejudice, or partiality in content', level: 'Competent', icon: '⚠️' },
-      { id: 'verify', name: 'Verify Information', category: 'Evaluate Information', description: 'Check accuracy and truthfulness of claims or data', level: 'Competent', icon: '🔎' },
-      
-      // Create Things
-      { id: 'brainstorm', name: 'Brainstorm Ideas', category: 'Create Things', description: 'Generate creative concepts, angles, or approaches without initial judgment', level: 'Novice', icon: '💡' },
-      { id: 'outline', name: 'Create Outlines', category: 'Create Things', description: 'Develop structured frameworks for projects, documents, or presentations', level: 'Novice', icon: '📋' },
-      { id: 'stories', name: 'Generate Stories', category: 'Create Things', description: 'Creating narratives with plot, characters, and settings', level: 'Competent', icon: '📖' },
-      { id: 'dialogue', name: 'Create Dialogue', category: 'Create Things', description: 'Write conversational exchanges between characters or for specific purposes', level: 'Competent', icon: '💬' },
-      { id: 'characters', name: 'Develop Characters', category: 'Create Things', description: 'Design fictional personas with backstories, personalities, and traits', level: 'Competent', icon: '👤' },
-      { id: 'scenarios', name: 'Design Scenarios', category: 'Create Things', description: 'Invent hypothetical situations for planning, training, or storytelling', level: 'Competent', icon: '🎭' },
-      
-      // Transform Content
-      { id: 'translate-lang', name: 'Translate Language', category: 'Transform Content', description: 'Converting text between languages while preserving meaning and tone', level: 'Competent', icon: '🌍' },
-      { id: 'reformat', name: 'Change Format', category: 'Transform Content', description: 'Converting content from one format to another', level: 'Novice', icon: '🔄' },
-      
-      // Make Decisions
-      { id: 'compare-options', name: 'Compare Options', category: 'Make Decisions', description: 'Side-by-side evaluation of alternatives across relevant dimensions', level: 'Competent', icon: '⚖️' },
-      { id: 'proscons', name: 'Evaluate Pros and Cons', category: 'Make Decisions', description: 'Listing advantages and disadvantages of each choice', level: 'Novice', icon: '📊' },
-      { id: 'tradeoffs', name: 'Weigh Trade-offs', category: 'Make Decisions', description: 'Balancing competing benefits and costs in a decision', level: 'Competent', icon: '⚖️' },
-      { id: 'prioritize', name: 'Prioritize Tasks', category: 'Make Decisions', description: 'Ordering activities by importance, urgency, and impact', level: 'Competent', icon: '📋' },
-      { id: 'frameworks', name: 'Apply Decision Frameworks', category: 'Make Decisions', description: 'Using structured models (SWOT, cost-benefit, etc.) to guide choices', level: 'Proficient', icon: '🎯' },
-      { id: 'predict', name: 'Predict Outcomes', category: 'Make Decisions', description: 'Forecasting likely results of decisions or actions', level: 'Proficient', icon: '🔮' },
-      
-      // Solve Problems
-      { id: 'rootcause', name: 'Identify Root Causes', category: 'Solve Problems', description: 'Finding underlying reasons for problems rather than treating symptoms', level: 'Proficient', icon: '🌳' },
-      { id: 'solutions', name: 'Generate Solutions', category: 'Solve Problems', description: 'Creating potential fixes or improvements for identified problems', level: 'Competent', icon: '💡' },
-      { id: 'eval-solutions', name: 'Evaluate Solutions', category: 'Solve Problems', description: 'Assessing feasibility, effectiveness, and appropriateness of potential solutions', level: 'Competent', icon: '✓' },
-      { id: 'plan', name: 'Plan Implementation', category: 'Solve Problems', description: 'Developing step-by-step action plans for chosen solutions', level: 'Competent', icon: '📅' },
-      { id: 'troubleshoot', name: 'Troubleshoot Issues', category: 'Solve Problems', description: 'Diagnosing and resolving malfunctions, errors, or unexpected behaviors', level: 'Competent', icon: '🔧' },
-      { id: 'optimize', name: 'Optimize Systems', category: 'Solve Problems', description: 'Improving efficiency and performance of processes, routines, or systems', level: 'Proficient', icon: '⚡' },
-      
-      // Analyze Systems
-      { id: 'map-systems', name: 'Map Systems', category: 'Analyze Systems', description: 'Visualizing or describing how components of a system relate and interact', level: 'Proficient', icon: '🗺️' },
-      
-      // Improve Work
-      { id: 'clarity', name: 'Improve Clarity', category: 'Improve Work', description: 'Making text more understandable, direct, and unambiguous', level: 'Novice', icon: '✨' },
-      { id: 'concise', name: 'Improve Conciseness', category: 'Improve Work', description: 'Removing unnecessary words while preserving meaning', level: 'Novice', icon: '✂️' },
-      { id: 'tone', name: 'Improve Tone', category: 'Improve Work', description: 'Adjusting language to match desired emotional impact or formality level', level: 'Novice', icon: '🎭' },
-      { id: 'structure', name: 'Improve Structure', category: 'Improve Work', description: 'Reorganizing content for better flow, logic, and readability', level: 'Competent', icon: '🏗️' },
-      { id: 'grammar', name: 'Improve Grammar', category: 'Improve Work', description: 'Correcting language errors, typos, and mechanical issues', level: 'Novice', icon: '📝' },
-      { id: 'audience', name: 'Adapt for Audience', category: 'Improve Work', description: 'Tailoring content to specific reader groups or contexts', level: 'Competent', icon: '👥' },
-      
-      // Practical Skills
-      { id: 'recipes', name: 'Cooking Recipes', category: 'Practical Skills', description: 'Providing ingredient lists and preparation steps for meals', level: 'Novice', icon: '👨‍🍳' },
-      { id: 'diy', name: 'DIY Instructions', category: 'Practical Skills', description: 'Guiding through home improvement, crafting, or repair projects', level: 'Novice', icon: '🔨' },
-      { id: 'budget', name: 'Budget Planning', category: 'Practical Skills', description: 'Helping allocate finances and track expenses', level: 'Novice', icon: '💰' },
-      
-      // Entertainment
-      { id: 'tell-stories', name: 'Tell Stories', category: 'Entertainment', description: 'Narrating fictional or personalized tales for entertainment', level: 'Novice', icon: '📚' },
-      { id: 'jokes', name: 'Generate Jokes', category: 'Entertainment', description: 'Creating humorous one-liners, puns, or funny content', level: 'Novice', icon: '😄' },
-      { id: 'games', name: 'Suggest Games', category: 'Entertainment', description: 'Recommending play activities, board games, or party games', level: 'Novice', icon: '🎮' },
-      
-      // Personal & Wellness
-      { id: 'health-info', name: 'Provide Health Information', category: 'Personal & Wellness', description: 'Offering general knowledge about medical conditions, wellness, and healthy habits', level: 'Novice', icon: '❤️' },
-      { id: 'exercises', name: 'Suggest Exercises', category: 'Personal & Wellness', description: 'Recommending physical activities for fitness goals and ability levels', level: 'Novice', icon: '💪' },
-      { id: 'mental-health', name: 'Mental Health Support', category: 'Personal & Wellness', description: 'Providing coping strategies, mindfulness techniques, and emotional support resources', level: 'Competent', icon: '🧠' },
-      { id: 'habits', name: 'Habit Formation', category: 'Personal & Wellness', description: 'Designing routines and strategies to build and maintain new positive behaviors', level: 'Competent', icon: '🌱' },
-      { id: 'goal-setting', name: 'Goal Setting', category: 'Personal & Wellness', description: 'Helping define, plan, and achieve personal objectives', level: 'Novice', icon: '🎯' },
-      
-      // Social & Emotional
-      { id: 'draft-msg', name: 'Draft Messages', category: 'Social & Emotional', description: 'Composing emails, texts, or social media communications', level: 'Novice', icon: '✉️' },
-      { id: 'respond', name: 'Respond to Messages', category: 'Social & Emotional', description: 'Formulating replies to incoming communications', level: 'Novice', icon: '↩️' },
-      { id: 'practice-convo', name: 'Practice Conversations', category: 'Social & Emotional', description: 'Simulating dialogues for skill development or preparation', level: 'Competent', icon: '🎭' }
+      { id: 'explain', name: 'Explain Complex Concepts', category: 'Learn', desc: 'Break down topics', level: 'Novice', icon: '📚' },
+      { id: 'summarize', name: 'Summarize Texts', category: 'Research', desc: 'Condense content', level: 'Novice', icon: '📝' },
+      { id: 'brainstorm', name: 'Brainstorm Ideas', category: 'Create', desc: 'Generate concepts', level: 'Novice', icon: '💡' },
+      { id: 'compare', name: 'Compare Options', category: 'Decide', desc: 'Evaluate choices', level: 'Competent', icon: '⚖️' },
+      { id: 'clarity', name: 'Improve Clarity', category: 'Improve', desc: 'Make text clear', level: 'Novice', icon: '✨' },
+      { id: 'analyze', name: 'Analyze Arguments', category: 'Research', desc: 'Evaluate logic', level: 'Competent', icon: '🔍' },
+      { id: 'stories', name: 'Generate Stories', category: 'Create', desc: 'Create narratives', level: 'Competent', icon: '📖' },
+      { id: 'solve', name: 'Solve Problems', category: 'Solve', desc: 'Find solutions', level: 'Proficient', icon: '🧩' }
     ];
 
-    const categories = [
-      { id: 'learn', name: 'Learn New Things', color: '#3b82f6' },
-      { id: 'research', name: 'Research & Analyze', color: '#8b5cf6' },
-      { id: 'evaluate', name: 'Evaluate Information', color: '#ef4444' },
-      { id: 'create', name: 'Create Things', color: '#ec4899' },
-      { id: 'transform', name: 'Transform Content', color: '#06b6d4' },
-      { id: 'decide', name: 'Make Decisions', color: '#f59e0b' },
-      { id: 'solve', name: 'Solve Problems', color: '#10b981' },
-      { id: 'analyze', name: 'Analyze Systems', color: '#6366f1' },
-      { id: 'improve', name: 'Improve Work', color: '#84cc16' },
-      { id: 'practical', name: 'Practical Skills', color: '#14b8a6' },
-      { id: 'entertain', name: 'Entertainment', color: '#f97316' },
-      { id: 'wellness', name: 'Personal & Wellness', color: '#22c55e' },
-      { id: 'social', name: 'Social & Emotional', color: '#a855f7' }
-    ];
-
-    // LocalStorage Hook
-    function useLocalStorage(key, initialValue) {
-      const [stored, setStored] = useState(() => {
-        try {
-          const item = window.localStorage.getItem(key);
-          return item ? JSON.parse(item) : initialValue;
-        } catch { return initialValue; }
-      });
-      const setValue = (value) => {
-        try {
-          setStored(value);
-          window.localStorage.setItem(key, JSON.stringify(value));
-        } catch {}
-      };
-      return [stored, setValue];
-    }
-
-    // Error Boundary
-    class ErrorBoundary extends React.Component {
-      constructor(props) {
-        super(props);
-        this.state = { hasError: false, error: null };
-      }
-      static getDerivedStateFromError(error) {
-        return { hasError: true, error };
-      }
-      componentDidCatch(error, errorInfo) {
-        console.error('Error caught by boundary:', error, errorInfo);
-      }
-      render() {
-        if (this.state.hasError) {
-          return (
-            <div className="min-h-screen bg-dark flex items-center justify-center p-8">
-              <div className="bg-red-900/30 border border-red-500 rounded-lg p-8 max-w-md text-center">
-                <div className="text-6xl mb-4">⚠️</div>
-                <h2 className="text-2xl font-bold text-red-300 mb-4">Something went wrong</h2>
-                <p className="text-red-200/70 mb-6">The game encountered an error. Try refreshing the page.</p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors"
-                >
-                  Reload Page
-                </button>
-              </div>
-            </div>
-          );
-        }
-        return this.props.children;
-      }
-    }
-
-    // Navigation
     function Navigation() {
-      return (
-        <nav className="bg-dark/90 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center justify-between h-16">
-              <Link to="/" className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                AI Capability Games
-              </Link>
-              <div className="hidden md:flex space-x-4">
-                <Link to="/labyrinth" className="text-gray-300 hover:text-primary px-3 py-2 text-sm">🪞 Labyrinth</Link>
-                <Link to="/codex" className="text-gray-300 hover:text-primary px-3 py-2 text-sm">📖 Codex</Link>
-                <Link to="/progressorium" className="text-gray-300 hover:text-primary px-3 py-2 text-sm">⚙️ Progressorium</Link>
-                <Link to="/wheel" className="text-gray-300 hover:text-primary px-3 py-2 text-sm">🎰 Wheel</Link>
-              </div>
-            </div>
-          </div>
-        </nav>
+      return h('nav', { className: 'bg-dark/90 border-b border-white/10 sticky top-0 z-50' },
+        h('div', { className: 'max-w-7xl mx-auto px-4' },
+          h('div', { className: 'flex items-center justify-between h-16' },
+            h(Link, { to: '/', className: 'text-xl font-bold text-primary' }, 'AI Capability Games'),
+            h('div', { className: 'hidden md:flex space-x-4' },
+              h(Link, { to: '/labyrinth', className: 'text-gray-300 hover:text-primary px-3 py-2 text-sm' }, '🪞 Labyrinth'),
+              h(Link, { to: '/codex', className: 'text-gray-300 hover:text-primary px-3 py-2 text-sm' }, '📖 Codex'),
+              h(Link, { to: '/progressorium', className: 'text-gray-300 hover:text-primary px-3 py-2 text-sm' }, '⚙️ Progress'),
+              h(Link, { to: '/wheel', className: 'text-gray-300 hover:text-primary px-3 py-2 text-sm' }, '🎰 Wheel')
+            )
+          )
+        )
       );
     }
 
-    // Hero
     function Hero() {
-      const [progress] = useLocalStorage('capability-progress', {});
-      const unlockedCount = Object.keys(progress).length;
-      
-      const games = [
-        { title: "🪞 Labyrinth of Mirrors", desc: "Navigate a shifting decision tree", path: "/labyrinth", color: "from-pink-500 to-purple-600" },
-        { title: "📖 Celestial Codex", desc: "Draw constellations to unlock capabilities", path: "/codex", color: "from-blue-500 to-cyan-600" },
-        { title: "⚙️ Progressorium", desc: "Tend your steampunk skill garden", path: "/progressorium", color: "from-amber-500 to-orange-600" },
-        { title: "🎰 Wheel of Misfortune", desc: "Fate chooses your lesson", path: "/wheel", color: "from-green-500 to-emerald-600" }
-      ];
-
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-dark via-secondary to-accent">
-          <div className="relative overflow-hidden py-24 px-4">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(233,69,96,0.1)_0%,_transparent_70%)]"></div>
-            <div className="text-center max-w-4xl mx-auto relative">
-              <h1 className="text-5xl md:text-7xl font-extrabold mb-6">
-                <span className="bg-gradient-to-r from-primary via-purple-400 to-secondary bg-clip-text text-transparent">AI Capability Atlas</span>
-                <br /><span className="text-white">Learning Games</span>
-              </h1>
-              <p className="text-xl text-gray-300 mb-8">Five archetypes. One vision. Discover 71 AI capabilities through play.</p>
-              
-              {/* Progress Bar */}
-              <div className="max-w-md mx-auto mb-8">
-                <div className="flex justify-between text-sm text-gray-400 mb-2">
-                  <span>Your Progress</span>
-                  <span>{unlockedCount} / {capabilities.length} Capabilities</span>
-                </div>
-                <div className="h-3 bg-dark rounded-full overflow-hidden border border-white/10">
-                  <div className="h-full bg-gradient-to-r from-primary to-secondary transition-all duration-500" style={{ width: `${(unlockedCount / capabilities.length) * 100}%` }}></div>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap justify-center gap-3 mb-12">
-                {['🧙 Wizard', '⚙️ Engineer', '🃏 Trickster', '📚 Sage', '🎨 Artist'].map(b => (
-                  <span key={b} className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm border border-white/20 hover:border-primary/50 transition-colors">{b}</span>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="max-w-7xl mx-auto px-4 pb-16">
-            <h2 className="text-3xl font-bold text-center mb-12 text-white">Choose Your Game</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {games.map(g => (
-                <Link key={g.path} to={g.path} className="group relative overflow-hidden rounded-2xl p-8 transition hover:scale-105">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${g.color} opacity-20 group-hover:opacity-40 transition-opacity`}></div>
-                  <div className="relative bg-dark/50 backdrop-blur-sm rounded-xl p-6 border border-white/10 group-hover:border-white/20 transition-colors">
-                    <h3 className="text-2xl font-bold text-white group-hover:text-primary mb-2 transition-colors">{g.title}</h3>
-                    <p className="text-gray-400">{g.desc}</p>
-                    <div className="mt-4 text-primary font-medium group-hover:translate-x-2 transition-transform inline-block">Play Now →</div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
+      return h('div', { className: 'min-h-screen bg-gradient-to-br from-dark via-secondary to-accent p-8' },
+        h('div', { className: 'text-center max-w-4xl mx-auto pt-24' },
+          h('h1', { className: 'text-5xl md:text-7xl font-bold mb-6' },
+            h('span', { className: 'text-primary' }, 'AI Capability Atlas'),
+            h('br', null),
+            h('span', { className: 'text-white' }, 'Learning Games')
+          ),
+          h('p', { className: 'text-xl text-gray-300 mb-12' }, 'Discover AI capabilities through play'),
+          h('div', { className: 'grid grid-cols-1 md:grid-cols-2 gap-6' },
+            h(GameCard, { title: '🪞 Labyrinth', desc: 'Navigate the decision tree', to: '/labyrinth', color: 'pink' }),
+            h(GameCard, { title: '📖 Celestial Codex', desc: 'Draw constellations', to: '/codex', color: 'blue' }),
+            h(GameCard, { title: '⚙️ Progressorium', desc: 'Grow your skills', to: '/progressorium', color: 'amber' }),
+            h(GameCard, { title: '🎰 Wheel of Misfortune', desc: 'Fate decides', to: '/wheel', color: 'green' })
+          )
+        )
       );
     }
 
-    // Labyrinth Game - FULLY IMPLEMENTED
+    function GameCard({ title, desc, to, color }) {
+      const colors = { pink: 'from-pink-500 to-purple-600', blue: 'from-blue-500 to-cyan-600', amber: 'from-amber-500 to-orange-600', green: 'from-green-500 to-emerald-600' };
+      return h(Link, { to, className: 'block group' },
+        h('div', { className: 'bg-gradient-to-br ' + colors[color] + ' opacity-20 group-hover:opacity-40 rounded-2xl p-8 transition-all hover:scale-105' },
+          h('div', { className: 'bg-dark/50 rounded-xl p-6 border border-white/10' },
+            h('h3', { className: 'text-2xl font-bold text-white mb-2' }, title),
+            h('p', { className: 'text-gray-400' }, desc),
+            h('div', { className: 'mt-4 text-primary' }, 'Play Now →')
+          )
+        )
+      );
+    }
+
     function Labyrinth() {
       const svgRef = useRef(null);
-      const [selectedCap, setSelectedCap] = useState(null);
-      const [progress, setProgress] = useLocalStorage('capability-progress', {});
-      const [searchTerm, setSearchTerm] = useState('');
+      const [selected, setSelected] = useState(null);
 
-      const treeData = {
-        name: "AI Capabilities",
-        children: [
-          {
-            name: "📚 Learn",
-            children: capabilities.filter(c => c.category === 'Learn New Things').map(c => ({ name: c.name, capability: c.id, icon: c.icon }))
-          },
-          {
-            name: "🔍 Research",
-            children: capabilities.filter(c => c.category === 'Research & Analyze').map(c => ({ name: c.name, capability: c.id, icon: c.icon }))
-          },
-          {
-            name: "✓ Evaluate",
-            children: capabilities.filter(c => c.category === 'Evaluate Information').map(c => ({ name: c.name, capability: c.id, icon: c.icon }))
-          },
-          {
-            name: "💡 Create",
-            children: capabilities.filter(c => c.category === 'Create Things').map(c => ({ name: c.name, capability: c.id, icon: c.icon }))
-          },
-          {
-            name: "🔄 Transform",
-            children: capabilities.filter(c => c.category === 'Transform Content').map(c => ({ name: c.name, capability: c.id, icon: c.icon }))
-          },
-          {
-            name: "⚖️ Decide",
-            children: capabilities.filter(c => c.category === 'Make Decisions').map(c => ({ name: c.name, capability: c.id, icon: c.icon }))
-          },
-          {
-            name: "🧩 Solve",
-            children: capabilities.filter(c => c.category === 'Solve Problems').map(c => ({ name: c.name, capability: c.id, icon: c.icon }))
-          },
-          {
-            name: "✨ Improve",
-            children: capabilities.filter(c => c.category === 'Improve Work').map(c => ({ name: c.name, capability: c.id, icon: c.icon }))
-          }
-        ]
-      };
-
-      useEffect(() => {
+      useEffect(function() {
+        if (!svgRef.current) return;
         const svg = d3.select(svgRef.current);
-        svg.selectAll("*").remove();
-        const width = 900, height = 600;
-        svg.attr("width", width).attr("height", height);
-        const g = svg.append("g").attr("transform", "translate(120,50)");
+        svg.selectAll('*').remove();
+        
+        const treeData = {
+          name: 'AI Capabilities',
+          children: [
+            { name: 'Learn', children: capabilities.filter(function(c) { return c.category === 'Learn'; }).map(function(c) { return { name: c.name, cap: c }; }) },
+            { name: 'Research', children: capabilities.filter(function(c) { return c.category === 'Research'; }).map(function(c) { return { name: c.name, cap: c }; }) },
+            { name: 'Create', children: capabilities.filter(function(c) { return c.category === 'Create'; }).map(function(c) { return { name: c.name, cap: c }; }) },
+            { name: 'Decide', children: capabilities.filter(function(c) { return c.category === 'Decide'; }).map(function(c) { return { name: c.name, cap: c }; }) }
+          ]
+        };
 
         const root = d3.hierarchy(treeData);
-        const treeLayout = d3.tree().size([500, 700]);
-        treeLayout(root);
+        d3.tree().size([300, 500])(root);
 
-        // Links with gradient
-        const defs = svg.append("defs");
-        const gradient = defs.append("linearGradient").attr("id", "link-gradient").attr("x1", "0%").attr("y1", "0%").attr("x2", "100%").attr("y2", "0%");
-        gradient.append("stop").attr("offset", "0%").attr("stop-color", "#e94560").attr("stop-opacity", 0.3);
-        gradient.append("stop").attr("offset", "100%").attr("stop-color", "#533483").attr("stop-opacity", 0.8);
+        svg.selectAll('.link').data(root.links()).enter().append('path')
+          .attr('fill', 'none').attr('stroke', '#e94560').attr('stroke-width', 2)
+          .attr('d', d3.linkHorizontal().x(function(d) { return d.y; }).y(function(d) { return d.x; }));
 
-        g.selectAll(".link").data(root.links()).enter().append("path")
-          .attr("class", "link")
-          .attr("fill", "none")
-          .attr("stroke", "url(#link-gradient)")
-          .attr("stroke-width", d => d.target.depth === 2 ? 2 : 1.5)
-          .attr("stroke-opacity", 0.6)
-          .attr("d", d3.linkHorizontal().x(d => d.y).y(d => d.x));
+        const nodes = svg.selectAll('.node').data(root.descendants()).enter().append('g')
+          .attr('transform', function(d) { return 'translate(' + d.y + ',' + d.x + ')'; })
+          .style('cursor', 'pointer')
+          .on('click', function(e, d) { if (d.data.cap) setSelected(d.data.cap); });
 
-        // Nodes
-        const nodes = g.selectAll(".node").data(root.descendants()).enter().append("g")
-          .attr("class", "node cursor-pointer")
-          .attr("transform", d => `translate(${d.y},${d.x})`)
-          .on("click", (e, d) => {
-            if (d.data.capability) {
-              const cap = capabilities.find(c => c.id === d.data.capability);
-              setSelectedCap(cap);
-              setProgress({ ...progress, [cap.id]: true });
-            }
-          });
+        nodes.append('circle').attr('r', function(d) { return d.data.cap ? 20 : 15; }).attr('fill', '#533483').attr('stroke', '#e94560').attr('stroke-width', 2);
+        nodes.append('text').attr('dy', '.35em').attr('x', function(d) { return d.children ? -25 : 25; }).attr('text-anchor', function(d) { return d.children ? 'end' : 'start'; })
+          .text(function(d) { return d.data.name; }).attr('fill', 'white').attr('font-size', '12px');
+      }, []);
 
-        // Mirror effect circles
-        nodes.append("circle").attr("r", d => d.depth === 0 ? 30 : d.depth === 1 ? 20 : 15)
-          .attr("fill", d => d.depth === 0 ? "#1a1a2e" : progress[d.data.capability] ? "#e94560" : "#533483")
-          .attr("stroke", "#e94560").attr("stroke-width", 2)
-          .attr("class", "transition-all duration-300 hover:fill-primary");
-
-        // Inner glow for unlocked
-        nodes.filter(d => progress[d.data.capability]).append("circle")
-          .attr("r", 25).attr("fill", "none").attr("stroke", "#e94560").attr("stroke-width", 1).attr("stroke-opacity", 0.3)
-          .attr("class", "star-glow");
-
-        // Icons/text
-        nodes.append("text").attr("dy", ".35em").attr("x", d => d.children ? -35 : 35)
-          .attr("text-anchor", d => d.children ? "end" : "start")
-          .text(d => d.data.icon || d.data.name.split(' ')[0])
-          .attr("fill", "white").attr("font-size", d => d.depth === 0 ? "14px" : "12px");
-
-      }, [progress]);
-
-      const filteredCaps = capabilities.filter(c => 
-        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.description.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-dark via-secondary to-accent p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-4">🪞 Labyrinth of Infinite Mirrors</h1>
-              <p className="text-gray-300 mb-4">Navigate the decision tree. Click mirror nodes to discover and unlock AI capabilities.</p>
-              <input
-                type="text"
-                placeholder="Search capabilities..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="px-4 py-2 bg-dark/50 border border-white/20 rounded-lg text-white placeholder-gray-500 focus:border-primary focus:outline-none w-full max-w-md"
-              />
-            </div>
-
-            {searchTerm ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {filteredCaps.map(cap => (
-                  <div key={cap.id} onClick={() => { setSelectedCap(cap); setProgress({ ...progress, [cap.id]: true }); }}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all hover:scale-105 ${progress[cap.id] ? 'bg-primary/20 border-primary' : 'bg-dark/50 border-white/10'}`}>
-                    <div className="text-2xl mb-2">{cap.icon}</div>
-                    <h3 className="font-bold text-white">{cap.name}</h3>
-                    <p className="text-sm text-gray-400">{cap.category}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-dark/50 rounded-2xl p-4 border border-white/10 overflow-x-auto">
-                  <svg ref={svgRef}></svg>
-                </div>
-
-                <div className="space-y-4">
-                  {selectedCap ? (
-                    <div className="bg-dark/50 rounded-2xl p-6 border border-primary/30 animate-pulse">
-                      <div className="text-4xl text-center mb-4">{selectedCap.icon}</div>
-                      <h2 className="text-2xl font-bold text-primary mb-2">{selectedCap.name}</h2>
-                      <span className="px-3 py-1 bg-secondary/30 rounded-full text-sm text-gray-300">{selectedCap.category}</span>
-                      <p className="text-gray-300 mt-4">{selectedCap.description}</p>
-                      <div className="mt-4 p-3 bg-primary/10 rounded-lg">
-                        <p className="text-sm text-primary">✓ Capability Unlocked!</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-dark/50 rounded-2xl p-6 border border-white/10 text-center text-gray-400">
-                      <div className="text-6xl mb-4">🪞</div>
-                      <p>Click a mirror node to reveal its capability</p>
-                      <p className="text-sm mt-2 text-gray-500">Progress is saved automatically</p>
-                    </div>
-                  )}
-
-                  <div className="bg-dark/50 rounded-2xl p-6 border border-white/10">
-                    <h3 className="text-lg font-bold text-white mb-4">Your Journey</h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Mirrors Unlocked</span>
-                        <span className="text-primary">{Object.keys(progress).length} / {capabilities.length}</span>
-                      </div>
-                      <div className="w-full bg-dark rounded-full h-2">
-                        <div className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all" style={{ width: `${(Object.keys(progress).length / capabilities.length) * 100}%` }}></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+      return h('div', { className: 'min-h-screen bg-gradient-to-br from-dark via-secondary to-accent p-8' },
+        h('div', { className: 'max-w-7xl mx-auto' },
+          h('h1', { className: 'text-4xl font-bold text-center mb-8' }, '🪞 Labyrinth'),
+          h('div', { className: 'grid grid-cols-1 lg:grid-cols-3 gap-8' },
+            h('div', { className: 'lg:col-span-2 bg-dark/50 rounded-2xl p-6' },
+              h('svg', { ref: svgRef, width: 700, height: 400, className: 'w-full' })
+            ),
+            h('div', { className: 'bg-dark/50 rounded-2xl p-6' },
+              selected ? h('div', null,
+                h('div', { className: 'text-4xl text-center mb-4' }, selected.icon),
+                h('h2', { className: 'text-2xl font-bold text-primary mb-2' }, selected.name),
+                h('p', { className: 'text-gray-300' }, selected.desc)
+              ) : h('div', { className: 'text-center text-gray-400 py-12' }, 'Click a node')
+            )
+          )
+        )
       );
     }
 
-    // Celestial Codex - FULLY IMPLEMENTED with Canvas
     function CelestialCodex() {
       const canvasRef = useRef(null);
-      const [stars, setStars] = useState([]);
-      const [connections, setConnections] = useState([]);
-      const [isDrawing, setIsDrawing] = useState(false);
-      const [startStar, setStartStar] = useState(null);
-      const [unlockedCapabilities, setUnlockedCapabilities] = useLocalStorage('codex-unlocked', []);
-      const [currentCap, setCurrentCap] = useState(null);
-      const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-      useEffect(() => {
-        const newStars = capabilities.slice(0, 20).map((cap, i) => ({
-          id: i,
-          x: 80 + (i % 5) * 130 + Math.random() * 40,
-          y: 80 + Math.floor(i / 5) * 100 + Math.random() * 40,
-          capability: cap,
-          pulse: Math.random() * Math.PI * 2
-        }));
-        setStars(newStars);
-      }, []);
-
-      useEffect(() => {
+      useEffect(function() {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        
-        let animationFrame;
+        let frameId;
 
-        const animate = () => {
+        const stars = capabilities.slice(0, 8).map(function(cap, i) {
+          return { x: 100 + (i % 4) * 150, y: 100 + Math.floor(i / 4) * 150, cap: cap };
+        });
+
+        const animate = function() {
           ctx.fillStyle = '#0f172a';
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-          // Background stars
-          for (let i = 0; i < 150; i++) {
-            const x = (i * 137.5) % canvas.width;
-            const y = (i * 73.3) % canvas.height;
-            const twinkle = Math.sin(Date.now() * 0.001 + i) * 0.5 + 0.5;
-            ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.5})`;
+          stars.forEach(function(star) {
+            ctx.fillStyle = '#533483';
             ctx.beginPath();
-            ctx.arc(x, y, Math.random() * 1.5, 0, Math.PI * 2);
+            ctx.arc(star.x, star.y, 15, 0, Math.PI * 2);
             ctx.fill();
-          }
-
-          // Draw completed constellations
-          connections.forEach(([start, end], idx) => {
-            const isNew = idx === connections.length - 1;
-            ctx.strokeStyle = isNew ? '#e94560' : '#533483';
-            ctx.lineWidth = isNew ? 3 : 2;
-            ctx.shadowBlur = isNew ? 15 : 0;
-            ctx.shadowColor = '#e94560';
-            ctx.beginPath();
-            ctx.moveTo(start.x, start.y);
-            ctx.lineTo(end.x, end.y);
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-          });
-
-          // Draw in-progress line
-          if (isDrawing && startStar) {
-            ctx.strokeStyle = 'rgba(233, 69, 96, 0.5)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(startStar.x, startStar.y);
-            ctx.lineTo(mousePos.x, mousePos.y);
-            ctx.stroke();
-            ctx.setLineDash([]);
-          }
-
-          // Draw stars
-          stars.forEach((star, i) => {
-            const isUnlocked = unlockedCapabilities.includes(star.capability.id);
-            const pulse = Math.sin(Date.now() * 0.002 + star.pulse) * 0.3 + 0.7;
-            
-            if (isUnlocked) {
-              const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, 40);
-              gradient.addColorStop(0, `rgba(233, 69, 96, ${0.6 * pulse})`);
-              gradient.addColorStop(0.5, `rgba(233, 69, 96, ${0.2 * pulse})`);
-              gradient.addColorStop(1, 'rgba(233, 69, 96, 0)');
-              ctx.fillStyle = gradient;
-              ctx.beginPath();
-              ctx.arc(star.x, star.y, 40, 0, Math.PI * 2);
-              ctx.fill();
-            }
-
-            // Star core
-            ctx.fillStyle = isUnlocked ? '#e94560' : '#533483';
-            ctx.beginPath();
-            ctx.arc(star.x, star.y, isUnlocked ? 10 : 7, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Star sparkle
-            ctx.strokeStyle = isUnlocked ? '#fff' : '#7c3aed';
-            ctx.lineWidth = 2;
-            const sparkleSize = isUnlocked ? 15 : 12;
-            ctx.beginPath();
-            ctx.moveTo(star.x - sparkleSize, star.y);
-            ctx.lineTo(star.x + sparkleSize, star.y);
-            ctx.moveTo(star.x, star.y - sparkleSize);
-            ctx.lineTo(star.x, star.y + sparkleSize);
-            ctx.stroke();
-
-            // Icon
-            ctx.font = isUnlocked ? '16px Arial' : '12px Arial';
+            ctx.font = '20px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(star.capability.icon, star.x, star.y);
+            ctx.fillText(star.cap.icon, star.x, star.y);
           });
 
-          animationFrame = requestAnimationFrame(animate);
+          frameId = requestAnimationFrame(animate);
         };
 
         animate();
-        
-        return () => {
-          if (animationFrame) cancelAnimationFrame(animationFrame);
-        };
-      }, [stars, connections, isDrawing, startStar, mousePos, unlockedCapabilities]);
+        return function() { cancelAnimationFrame(frameId); };
+      }, []);
 
-      const handleMouseDown = (e) => {
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-        const clickedStar = stars.find(star => {
-          const dist = Math.sqrt((star.x - x) ** 2 + (star.y - y) ** 2);
-          return dist < 25;
-        });
-
-        if (clickedStar) {
-          setIsDrawing(true);
-          setStartStar(clickedStar);
-        }
-      };
-
-      const handleMouseMove = (e) => {
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        setMousePos({
-          x: (e.clientX - rect.left) * (canvas.width / rect.width),
-          y: (e.clientY - rect.top) * (canvas.height / rect.height)
-        });
-      };
-
-      const handleMouseUp = (e) => {
-        if (!isDrawing || !startStar) return;
-
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-        const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-
-        const endStar = stars.find(star => {
-          const dist = Math.sqrt((star.x - x) ** 2 + (star.y - y) ** 2);
-          return dist < 25 && star.id !== startStar.id;
-        });
-
-        if (endStar) {
-          const newConnection = [startStar, endStar];
-          setConnections([...connections, newConnection]);
-          
-          if (connections.length >= 2) {
-            const lastStar = connections.length > 0 ? connections[connections.length - 1][1] : startStar;
-            if (!unlockedCapabilities.includes(endStar.capability.id)) {
-              setUnlockedCapabilities([...unlockedCapabilities, endStar.capability.id]);
-              setCurrentCap(endStar.capability);
-            }
-          }
-        }
-
-        setIsDrawing(false);
-        setStartStar(null);
-      };
-
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-dark via-secondary to-accent p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-white mb-4">📖 Celestial Codex</h1>
-              <p className="text-gray-300">Draw constellations by connecting stars. Complete 3+ connections to summon AI spirits.</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <canvas
-                  ref={canvasRef}
-                  width={750}
-                  height={500}
-                  className="w-full bg-dark/80 rounded-2xl border border-white/10 cursor-crosshair touch-none"
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onTouchStart={(e) => handleMouseDown(e.touches[0])}
-                  onTouchMove={(e) => handleMouseMove(e.touches[0])}
-                  onTouchEnd={(e) => handleMouseUp(e.changedTouches[0])}
-                />
-                <p className="text-center text-gray-400 mt-4 text-sm">Click and drag from star to star to draw constellation lines</p>
-              </div>
-
-              <div className="space-y-4">
-                {currentCap ? (
-                  <div className="bg-dark/50 rounded-2xl p-6 border border-primary/30 animate-pulse">
-                    <div className="text-4xl text-center mb-4">{currentCap.icon}</div>
-                    <h3 className="text-xl font-bold text-primary mb-2">{currentCap.name}</h3>
-                    <p className="text-gray-300 mb-4">{currentCap.description}</p>
-                    <div className="flex gap-2">
-                      <span className="px-3 py-1 bg-secondary/30 rounded-full text-sm">{currentCap.category}</span>
-                      <span className="px-3 py-1 bg-primary/30 rounded-full text-sm">{currentCap.level}</span>
-                    </div>
-                    <p className="text-xs text-primary mt-3">✓ Spirit Summoned!</p>
-                  </div>
-                ) : (
-                  <div className="bg-dark/50 rounded-2xl p-6 border border-white/10 text-center text-gray-400">
-                    <div className="text-6xl mb-4 animate-pulse">✨</div>
-                    <p>Create 3+ connections to summon an AI spirit</p>
-                    <p className="text-sm mt-2 text-gray-500">{connections.length} connections made</p>
-                  </div>
-                )}
-
-                <div className="bg-dark/50 rounded-2xl p-6 border border-white/10">
-                  <h3 className="text-lg font-bold text-white mb-4">Codex Progress</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Constellation Lines</span>
-                      <span className="text-primary">{connections.length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Spirits Summoned</span>
-                      <span className="text-primary">{unlockedCapabilities.length}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Stars in Sky</span>
-                      <span className="text-primary">{stars.length}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      return h('div', { className: 'min-h-screen bg-gradient-to-br from-dark via-secondary to-accent p-8' },
+        h('div', { className: 'max-w-4xl mx-auto' },
+          h('h1', { className: 'text-4xl font-bold text-center mb-8' }, '📖 Celestial Codex'),
+          h('canvas', { ref: canvasRef, width: 700, height: 400, className: 'w-full bg-dark/80 rounded-2xl border border-white/10' })
+        )
       );
     }
 
-    // Progressorium - FULLY IMPLEMENTED with SVG gears
     function Progressorium() {
-      const [selectedNode, setSelectedNode] = useState(null);
-      const [progress, setProgress] = useLocalStorage('progressorium-progress', {});
-
-      const skillTree = [
-        { id: 1, x: 50, y: 10, cap: capabilities[0], connections: [2, 3], size: 25 },
-        { id: 2, x: 25, y: 30, cap: capabilities[6], connections: [4], size: 20 },
-        { id: 3, x: 75, y: 30, cap: capabilities[12], connections: [5], size: 20 },
-        { id: 4, x: 15, y: 50, cap: capabilities[3], connections: [6], size: 18 },
-        { id: 5, x: 50, y: 50, cap: capabilities[18], connections: [6, 7], size: 18 },
-        { id: 6, x: 85, y: 50, cap: capabilities[24], connections: [7], size: 18 },
-        { id: 7, x: 30, y: 70, cap: capabilities[30], connections: [8], size: 22 },
-        { id: 8, x: 70, y: 70, cap: capabilities[36], connections: [], size: 28 }
-      ];
-
-      const handleNodeClick = (node) => {
-        setSelectedNode(node);
-        if (!progress[node.id]) {
-          setProgress({ ...progress, [node.id]: { unlocked: true, timestamp: Date.now() } });
-        }
-      };
-
-      const completedCount = Object.keys(progress).length;
-
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-amber-900 via-orange-900 to-amber-950 p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl font-bold text-amber-100 mb-4">⚙️ The Clockwork Progressorium</h1>
-              <p className="text-amber-200/70">Tend your garden of gear-plants. Click gears to activate your skills.</p>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 bg-black/40 rounded-2xl p-4 md:p-8 border border-amber-500/20">
-                <svg viewBox="0 0 100 85" className="w-full h-96">
-                  {/* Connection lines */}
-                  {skillTree.map(node =>
-                    node.connections.map(targetId => {
-                      const target = skillTree.find(n => n.id === targetId);
-                      const isActive = progress[node.id] && progress[targetId];
-                      return (
-                        <line
-                          key={`${node.id}-${targetId}`}
-                          x1={node.x}
-                          y1={node.y}
-                          x2={target.x}
-                          y2={target.y}
-                          stroke={isActive ? "#f59e0b" : "#451a03"}
-                          strokeWidth={isActive ? "1" : "0.5"}
-                          strokeDasharray={isActive ? "0" : "2,2"}
-                        />
-                      );
-                    })
-                  )}
-
-                  {/* Gear nodes */}
-                  {skillTree.map(node => {
-                    const isCompleted = progress[node.id];
-                    const gearSize = node.size / 10;
-                    
-                    return (
-                      <g
-                        key={node.id}
-                        transform={`translate(${node.x}, ${node.y})`}
-                        className="cursor-pointer"
-                        onClick={() => handleNodeClick(node)}
-                      >
-                        {/* Outer gear */}
-                        <circle
-                          r={gearSize}
-                          fill={isCompleted ? "#f59e0b" : "#451a03"}
-                          stroke="#d97706"
-                          strokeWidth="0.5"
-                          className={isCompleted ? "gear-spin" : ""}
-                        />
-                        
-                        {/* Gear teeth */}
-                        {[...Array(8)].map((_, i) => (
-                          <rect
-                            key={i}
-                            x="-0.3"
-                            y={-gearSize - 0.8}
-                            width="0.6"
-                            height="1.2"
-                            fill={isCompleted ? "#fbbf24" : "#78350f"}
-                            transform={`rotate(${i * 45})`}
-                          />
-                        ))}
-                        
-                        {/* Inner circle */}
-                        <circle r={gearSize * 0.4} fill={isCompleted ? "#fef3c7" : "#1a1a1a"} />
-                        
-                        {/* Icon */}
-                        <text y="1" textAnchor="middle" fontSize={gearSize * 0.5} fill={isCompleted ? "#92400e" : "#78350f"}>
-                          {node.cap.icon}
-                        </text>
-                        
-                        {/* Glow for completed */}
-                        {isCompleted && (
-                          <circle r={gearSize + 2} fill="none" stroke="#f59e0b" strokeWidth="0.3" opacity="0.3">
-                            <animate attributeName="r" values={`${gearSize + 2};${gearSize + 4};${gearSize + 2}`} dur="2s" repeatCount="indefinite" />
-                            <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite" />
-                          </circle>
-                        )}
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-
-              <div className="space-y-4">
-                {selectedNode ? (
-                  <div className="bg-black/40 rounded-2xl p-6 border border-amber-500/30 animate-pulse">
-                    <div className="text-4xl text-center mb-4">{selectedNode.cap.icon}</div>
-                    <h3 className="text-xl font-bold text-amber-400 mb-2">{selectedNode.cap.name}</h3>
-                    <p className="text-amber-100/70 mb-4">{selectedNode.cap.description}</p>
-                    <div className="flex gap-2 mb-4">
-                      <span className="px-3 py-1 bg-amber-900/50 rounded-full text-sm text-amber-200">{selectedNode.cap.category}</span>
-                      <span className="px-3 py-1 bg-amber-700/50 rounded-full text-sm text-amber-100">{selectedNode.cap.level}</span>
-                    </div>
-                    {progress[selectedNode.id] && (
-                      <div className="text-center text-green-400 text-sm">✓ Gear Activated & Spinning!</div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="bg-black/40 rounded-2xl p-6 border border-amber-500/30 text-center text-amber-200/50">
-                    <div className="text-6xl mb-4 gear-spin">⚙️</div>
-                    <p>Click a gear to inspect and activate it</p>
-                  </div>
-                )}
-
-                <div className="bg-black/40 rounded-2xl p-6 border border-amber-500/30">
-                  <h3 className="text-lg font-bold text-amber-300 mb-4">Machine Status</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-amber-200/70">Active Gears</span>
-                      <span className="text-amber-400">{completedCount} / {skillTree.length}</span>
-                    </div>
-                    <div className="w-full bg-amber-950 rounded-full h-2">
-                      <div className="bg-gradient-to-r from-amber-600 to-yellow-400 h-2 rounded-full transition-all" style={{ width: `${(completedCount / skillTree.length) * 100}%` }}></div>
-                    </div>
-                    <p className="text-xs text-amber-200/50 text-center">
-                      {completedCount === skillTree.length ? "🎉 Machine Fully Operational!" : "Continue tending your garden..."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+      return h('div', { className: 'min-h-screen bg-gradient-to-br from-amber-900 via-orange-900 to-amber-950 p-8' },
+        h('div', { className: 'max-w-4xl mx-auto text-center' },
+          h('h1', { className: 'text-4xl font-bold text-amber-100 mb-8' }, '⚙️ Progressorium'),
+          h('div', { className: 'bg-black/40 rounded-2xl p-8 border border-amber-500/30' },
+            capabilities.slice(0, 4).map(function(cap) {
+              return h('div', { key: cap.id, className: 'flex items-center gap-4 mb-4 p-4 bg-amber-900/30 rounded-lg' },
+                h('span', { className: 'text-2xl' }, cap.icon),
+                h('div', null,
+                  h('h3', { className: 'font-bold text-amber-300' }, cap.name),
+                  h('p', { className: 'text-amber-200/70 text-sm' }, cap.desc)
+                )
+              );
+            })
+          )
+        )
       );
     }
 
-    // Wheel of Misfortune - FULLY IMPLEMENTED
     function WheelOfMisfortune() {
-      const [rotation, setRotation] = useState(0);
-      const [isSpinning, setIsSpinning] = useState(false);
+      const [spinning, setSpinning] = useState(false);
       const [result, setResult] = useState(null);
-      const [history, setHistory] = useLocalStorage('wheel-history', []);
-      const wheelRef = useRef(null);
 
-      const wheelCategories = categories.slice(0, 6);
-
-      const spin = () => {
-        if (isSpinning) return;
-        setIsSpinning(true);
+      const spin = function() {
+        if (spinning) return;
+        setSpinning(true);
         setResult(null);
-        
-        const newRotation = rotation + 1800 + Math.random() * 360;
-        setRotation(newRotation);
-        
-        setTimeout(() => {
-          setIsSpinning(false);
-          const finalAngle = newRotation % 360;
-          const segmentAngle = 360 / wheelCategories.length;
-          const selectedIndex = Math.floor((360 - finalAngle + segmentAngle / 2) % 360 / segmentAngle);
-          const selectedCategory = wheelCategories[selectedIndex];
-          
-          const categoryCaps = capabilities.filter(c => c.category === selectedCategory.name);
-          const randomCap = categoryCaps[Math.floor(Math.random() * categoryCaps.length)];
-          
-          const spinResult = {
-            category: selectedCategory,
-            capability: randomCap || capabilities[Math.floor(Math.random() * capabilities.length)],
-            timestamp: Date.now()
-          };
-          
-          setResult(spinResult);
-          setHistory([spinResult, ...history].slice(0, 10));
-        }, 3000);
+        setTimeout(function() {
+          setSpinning(false);
+          setResult(capabilities[Math.floor(Math.random() * capabilities.length)]);
+        }, 2000);
       };
 
-      return (
-        <div className="min-h-screen bg-black p-4 md:p-8 font-mono">
-          <div className="fixed inset-0 pointer-events-none opacity-10" style={{
-            background: 'repeating-linear-gradient(0deg, rgba(0,0,0,0.15), rgba(0,0,0,0.15) 1px, transparent 1px, transparent 2px)'
-          }}></div>
-          
-          <div className="max-w-4xl mx-auto relative">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl md:text-6xl font-bold text-green-500 mb-4" style={{textShadow: '0 0 10px #22c55e, 0 0 20px #22c55e'}}>
-                🎰 WHEEL OF MISFORTUNE
-              </h1>
-              <p className="text-green-400/70">Fate chooses your lesson. Adapt or perish (metaphorically).</p>
-            </div>
-
-            <div className="flex flex-col items-center gap-8">
-              {/* Wheel */}
-              <div className="relative">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-10">
-                  <div className="w-0 h-0 border-l-[15px] border-r-[15px] border-t-[30px] border-l-transparent border-r-transparent border-t-red-500"></div>
-                </div>
-                
-                <svg
-                  ref={wheelRef}
-                  width="350"
-                  height="350"
-                  viewBox="0 0 350 350"
-                  className="wheel-spin"
-                  style={{ transform: `rotate(${rotation}deg)` }}
-                >
-                  <defs>
-                    {wheelCategories.map((cat, i) => (
-                      <linearGradient key={i} id={`grad${i}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor={cat.color} stopOpacity="0.9" />
-                        <stop offset="100%" stopColor={cat.color} stopOpacity="0.5" />
-                      </linearGradient>
-                    ))}
-                  </defs>
-                  
-                  <g transform="translate(175, 175)">
-                    {wheelCategories.map((cat, i) => {
-                      const angle = (360 / wheelCategories.length) * i;
-                      return (
-                        <g key={i} transform={`rotate(${angle})`}>
-                          <path
-                            d="M 0 0 L 150 -50 A 158 158 0 0 1 150 50 Z"
-                            fill={`url(#grad${i})`}
-                            stroke="#000"
-                            strokeWidth="2"
-                          />
-                          <text
-                            x="100"
-                            y="5"
-                            textAnchor="middle"
-                            fill="#fff"
-                            fontSize="11"
-                            fontWeight="bold"
-                            transform="rotate(30, 100, 0)"
-                            style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.8)' }}
-                          >
-                            {cat.name.split(' ')[0]}
-                          </text>
-                        </g>
-                      );
-                    })}
-                    
-                    <circle r="30" fill="#000" stroke="#22c55e" strokeWidth="3" />
-                    <text x="0" y="5" textAnchor="middle" fill="#22c55e" fontSize="14">SPIN</text>
-                  </g>
-                </svg>
-              </div>
-
-              <button
-                onClick={spin}
-                disabled={isSpinning}
-                className="px-8 py-4 bg-green-600 hover:bg-green-500 disabled:bg-green-800 text-black font-bold text-xl rounded border-2 border-green-400 transition-all transform hover:scale-105 active:scale-95 disabled:transform-none"
-                style={{boxShadow: '0 0 20px rgba(34, 197, 94, 0.5)'}}
-              >
-                {isSpinning ? '☠️ FATE DECIDING...' : '🎰 SPIN THE WHEEL'}
-              </button>
-
-              {result && (
-                <div className="w-full max-w-md bg-green-900/30 border-2 border-green-500 rounded-lg p-6 text-center animate-pulse">
-                  <p className="text-green-400 text-sm mb-2">☠️ FATE HAS SPOKEN ☠️</p>
-                  <div className="text-4xl mb-4">{result.capability.icon}</div>
-                  <h3 className="text-2xl font-bold text-green-300 mb-2">{result.capability.name}</h3>
-                  <p className="text-green-200/70 mb-2">{result.capability.description}</p>
-                  <div className="flex justify-center gap-4 text-sm">
-                    <span className="px-3 py-1 bg-green-800/50 rounded text-green-300">{result.category.name}</span>
-                    <span className="px-3 py-1 bg-green-700/50 rounded text-green-200">{result.capability.level}</span>
-                  </div>
-                  <p className="mt-4 text-xs text-green-400/50 italic">"The wheel is rigged. You cannot escape your destiny."</p>
-                </div>
-              )}
-
-              {!result && !isSpinning && (
-                <div className="text-center text-green-600/50 text-sm max-w-md">
-                  <p>The wheel knows what you need to learn.</p>
-                  <p>Resistance is futile.</p>
-                </div>
-              )}
-
-              {history.length > 0 && (
-                <div className="w-full max-w-md bg-black/50 border border-green-500/30 rounded-lg p-4">
-                  <h3 className="text-green-400 text-sm mb-3">Previous Spins</h3>
-                  <div className="space-y-2">
-                    {history.slice(0, 5).map((h, i) => (
-                      <div key={i} className="flex items-center gap-3 text-sm">
-                        <span>{h.capability.icon}</span>
-                        <span className="text-green-300 truncate">{h.capability.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      return h('div', { className: 'min-h-screen bg-black p-8 font-mono text-center' },
+        h('h1', { className: 'text-4xl md:text-6xl font-bold text-green-500 mb-8' }, '🎰 WHEEL OF MISFORTUNE'),
+        h('button', { 
+          onClick: spin, 
+          disabled: spinning,
+          className: 'px-8 py-4 bg-green-600 disabled:bg-green-800 text-black font-bold text-xl rounded border-2 border-green-400'
+        }, spinning ? 'SPINNING...' : 'SPIN'),
+        result && h('div', { className: 'mt-8 bg-green-900/30 border-2 border-green-500 rounded-lg p-6' },
+          h('div', { className: 'text-4xl mb-4' }, result.icon),
+          h('h3', { className: 'text-2xl font-bold text-green-300' }, result.name),
+          h('p', { className: 'text-green-200/70' }, result.desc)
+        )
       );
     }
 
-    // App
     function App() {
-      return (
-        <BrowserRouter basename="/ai-capability-games">
-          <div className="min-h-screen bg-dark text-white">
-            <Navigation />
-            <Routes>
-              <Route path="/" element={<Hero />} />
-              <Route path="/labyrinth" element={<ErrorBoundary><Labyrinth /></ErrorBoundary>} />
-              <Route path="/codex" element={<ErrorBoundary><CelestialCodex /></ErrorBoundary>} />
-              <Route path="/progressorium" element={<ErrorBoundary><Progressorium /></ErrorBoundary>} />
-              <Route path="/wheel" element={<ErrorBoundary><WheelOfMisfortune /></ErrorBoundary>} />
-            </Routes>
-          </div>
-        </BrowserRouter>
+      return h(BrowserRouter, { basename: '/ai-capability-games' },
+        h('div', { className: 'min-h-screen bg-dark text-white' },
+          h(Navigation),
+          h(Routes, null,
+            h(Route, { path: '/', element: h(Hero) }),
+            h(Route, { path: '/labyrinth', element: h(Labyrinth) }),
+            h(Route, { path: '/codex', element: h(CelestialCodex) }),
+            h(Route, { path: '/progressorium', element: h(Progressorium) }),
+            h(Route, { path: '/wheel', element: h(WheelOfMisfortune) })
+          )
+        )
       );
     }
 
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<App />);
+    ReactDOM.createRoot(document.getElementById('root')).render(h(App));
   </script>
 </body>
 </html>
