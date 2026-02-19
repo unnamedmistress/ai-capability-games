@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Capability Atlas — Learning Games | Improvisation Theater</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, #e94560 0%, #533483 50%, #0f3460 100%);
+            color: white;
+            padding: 6rem 2rem;
+            text-align: center;
+            min-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+            animation: pulse 10s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            max-width: 900px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .hero .tagline {
+            font-size: 1.4rem;
+            opacity: 0.9;
+            max-width: 700px;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .archetype-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .badge {
+            background: rgba(255,255,255,0.15);
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        
+        .intro {
+            background: rgba(255,255,255,0.05);
+            padding: 4rem 2rem;
+            margin: 2rem auto;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .intro h2 {
+            color: #e94560;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        
+        .intro p {
+            color: rgba(255,255,255,0.85);
+            font-size: 1.1rem;
+            line-height: 1.9;
+            max-width: 800px;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .games-section {
+            padding: 4rem 0;
+        }
+        
+        .games-section h2 {
+            color: #e94560;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .game-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 3rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 60px rgba(233, 69, 96, 0.2);
+        }
+        
+        .game-card h3 {
+            color: #e94560;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .game-card .subtitle {
+            color: rgba(255,255,255,0.6);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .game-card p {
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+        
+        .game-card strong {
+            color: #e94560;
+        }
+        
+        .archetype-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .archetype-tag {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            padding: 0.4rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .cta-section {
+            text-align: center;
+            padding: 5rem 2rem;
+            background: rgba(0,0,0,0.2);
+            margin-top: 2rem;
+        }
+        
+        .cta-section h2 {
+            color: white;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .cta-section p {
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #e94560 0%, #533483 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(233, 69, 96, 0.4);
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(233, 69, 96, 0.5);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.3);
+        }
+        
+        footer p {
+            margin-bottom: 0.5rem;
+        }
+        
+        .icon {
+            font-size: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .hero .tagline {
+                font-size: 1.1rem;
+            }
+            
+            .game-card {
+                padding: 2rem;
+            }
+            
+            .game-card h3 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <h1>AI Capability Atlas — Learning Games</h1>
+        <p class="tagline">Five archetypes. One vision. Discover 71 AI capabilities through play.</p>
+        <div class="archetype-badges">
+            <span class="badge">🧙 Wizard</span>
+            <span class="badge">⚙️ Engineer</span>
+            <span class="badge">🃏 Trickster</span>
+            <span class="badge">📚 Sage</span>
+            <span class="badge">🎨 Artist</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="intro">
+            <h2>How We Made These Games</h2>
+            <p>The <strong>Improvisation Theater</strong> method brings together 5 archetypal personas who improvise solutions in character, then synthesize their contributions into unified concepts.</p>
+            <p>For the AI Capability Atlas — a comprehensive framework with 71 capabilities across 13 categories, decision trees, skill ladders, and cognitive models — we asked our cast to dream up learning games that teach people to navigate and master AI capabilities through play.</p>
+            <p>Each game below blends <strong>magical vision</strong> (Wizard), <strong>technical feasibility</strong> (Engineer), <strong>disruptive twists</strong> (Trickster), <strong>learning science</strong> (Sage), and <strong>visual artistry</strong> (Artist).</p>
+        </div>
+        
+        <div class="games-section">
+            <h2>The Games</h2>
+            
+            <div class="game-card">
+                <h3><span class="icon">🪞</span> The Labyrinth of Infinite Mirrors</h3>
+                <p class="subtitle">"Every reflection reveals a new capability. Every step reshapes the path."</p>
+                
+                <p><strong>The Experience:</strong> Players traverse a shifting, retro-futuristic labyrinth where each mirror reflects not just their image, but an AI capability from the Atlas. Stepping through a mirror transports them into a micro-world where they must solve a puzzle related to that capability. The maze reshapes based on their progress — ensuring no two journeys are alike.</p>
+                
+                <p><strong>The Twist:</strong> Some mirrors are "Schrödinger mirrors" — stepping through reveals content that changes based on how long you stared at it. Reflections aren't fixed; they're alive.</p>
+                
+                <p><strong>Learning Science:</strong> Built on <strong>Constructivism</strong> — knowledge is built through active exploration. The labyrinth's <strong>Zone of Proximal Development</strong> adapts: Novices face simple matching puzzles, Competents tackle real-world scenarios, Proficient players confront abstract design challenges.</p>
+                
+                <p><strong>Technical Stack:</strong> React + D3.js for the shifting tree visualization. Capability data loaded from static JSON. Smooth WebGL transitions between mirror worlds.</p>
+                
+                <div class="archetype-tags">
+                    <span class="archetype-tag">🧙 Labyrinth of Mirrors</span>
+                    <span class="archetype-tag">⚙️ D3.js + WebGL</span>
+                    <span class="archetype-tag">🃏 Schrödinger Mirrors</span>
+                    <span class="archetype-tag">📚 ZPD + Constructivism</span>
+                    <span class="archetype-tag">🎨 Blade Runner × 1920s</span>
+                </div>
+            </div>
+            
+            <div class="game-card">
+                <h3><span class="icon">📖</span> The Celestial Codex</h3>
+                <p class="subtitle">"Draw connections between stars. Summon spirits of code and wisdom."</p>
+                
+                <p><strong>The Experience:</strong> Players wield a magical tome — the Celestial Codex — that responds to touch with floating, interactive constellations. Each constellation represents a category of AI capabilities. By "drawing" connections between stars (nodes in the decision tree), they summon AI spirits who teach through animated stories and mini-games.</p>
+                
+                <p><strong>The Twist:</strong> The Codex starts mid-crisis with zero tutorial. The first page reads: "The AI is rebelling! Fix it!" Players must click everything — including the copyright notice — to uncover hidden mechanics. Discovery, not instruction.</p>
+                
+                <p><strong>Learning Science:</strong> <strong>Spaced Repetition</strong> woven into the star chart — capabilities reappear in new contexts. <strong>Metacognition</strong> prompts ask players to articulate why they chose each connection. <strong>Transfer Learning</strong> happens as the same skill solves different spirit challenges.</p>
+                
+                <p><strong>Technical Stack:</strong> Svelte for reactive state management. Canvas-based constellation drawing with physics. Monaco Editor integration for the "spell-casting" (prompt experimentation) mini-games.</p>
+                
+                <div class="archetype-tags">
+                    <span class="archetype-tag">🧙 Celestial Codex</span>
+                    <span class="archetype-tag">⚙️ Svelte + Canvas</span>
+                    <span class="archetype-tag">🃏 No Tutorial, Just Crisis</span>
+                    <span class="archetype-tag">📚 Spaced Repetition</span>
+                    <span class="archetype-tag">🎨 Neon Cyberpunk</span>
+                </div>
+            </div>
+            
+            <div class="game-card">
+                <h3><span class="icon">⚙️</span> The Clockwork Progressorium</h3>
+                <p class="subtitle">"Tend the garden of gears. Watch hybrid capabilities bloom."</p>
+                
+                <p><strong>The Experience:</strong> A steampunk skill-tree machine where each gear-plant represents an AI capability. Players nurture plants by answering questions and solving problems. As plants grow, they bloom with holographic projections of AI concepts. Rare "hybrid" plants emerge when players discover connections between categories — revealing advanced capability combinations.</p>
+                
+                <p><strong>The Twist:</strong> The progress bar is broken — intentionally. It fills backwards when you focus on it, sideways when you ignore it, and occasionally spawns mini-games like "debug this regex" or "dodge the malware." Completion triggers a paradox: "Congratulations! You failed successfully."</p>
+                
+                <p><strong>Learning Science:</strong> <strong>Scaffolded Ladder</strong> built into the growth stages: seedlings (Novice definitions), blooming plants (Competent scenarios), hybrid species (Proficient synthesis). <strong>Transfer Learning</strong> happens through cross-pollination — skills from one domain applied to another.</p>
+                
+                <p><strong>Technical Stack:</strong> Firebase for persistence (garden state, user progress). Cloud Functions for AI-powered plant growth evaluation. SVG animations for gear mechanics.</p>
+                
+                <div class="archetype-tags">
+                    <span class="archetype-tag">🧙 Clockwork Garden</span>
+                    <span class="archetype-tag">⚙️ Firebase + SVG</span>
+                    <span class="archetype-tag">🃏 Progress Bar Hell</span>
+                    <span class="archetype-tag">📚 Scaffolded Growth</span>
+                    <span class="archetype-tag">🎨 Steampunk Aesthetic</span>
+                </div>
+            </div>
+            
+            <div class="game-card">
+                <h3><span class="icon">🎰</span> The Wheel of Misfortune</h3>
+                <p class="subtitle">"Fate chooses your lesson. Adapt or perish (metaphorically)."</p>
+                
+                <p><strong>The Experience:</strong> A surreal 8-bit library where a spinning wheel forces players into random Atlas categories. Land on "Research & Analyze"? You're now in a text-adventure jail cell debating source credibility with a sarcastic bot. Land on "Create Things"? Enjoy a rhythm game where brainstorming becomes musical pattern-matching. Each spin is a fever dream of learning.</p>
+                
+                <p><strong>The Twist:</strong> The wheel is rigged — by entropy itself. Categories you avoid appear more frequently. Mastery requires embracing the uncomfortable. The "correct" answer to every quiz is simultaneously right and wrong until you "observe" it by smashing a quantum particle button.</p>
+                
+                <p><strong>Learning Science:</strong> <strong>Spaced Repetition</strong> through forced revisits. <strong>Transfer Learning</strong> via category-hopping. <strong>Metacognition</strong> prompts ask: "Why did you avoid this category? What are you afraid of?"</p>
+                
+                <p><strong>Technical Stack:</strong> Lightweight game engine (Phaser.js). Static JSON for all 71 capabilities. Procedural generation for the sarcastic bot dialogue. Retro CRT shader effects.</p>
+                
+                <div class="archetype-tags">
+                    <span class="archetype-tag">🧙 Surreal Library</span>
+                    <span class="archetype-tag">⚙️ Phaser.js + CRT</span>
+                    <span class="archetype-tag">🃏 Schrödinger's Quiz</span>
+                    <span class="archetype-tag">📚 Forced Transfer</span>
+                    <span class="archetype-tag">🎨 8-bit Pixel Art</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="cta-section">
+        <h2>Ready to Build?</h2>
+        <p>Each game is designed for solo-dev implementation in under 2 weeks. The architecture is modular — start with the Labyrinth's D3.js tree, layer in the Trickster's chaos, wrap it in the Artist's visual world.</p>
+        <a href="#" class="cta-button">View Technical Specs</a>
+    </div>
+    
+    <footer>
+        <p>Crafted by the Improvisation Theater 🎭</p>
+        <p>Five archetypes. One vision. Infinite possibilities.</p>
+        <p style="margin-top: 1rem; font-size: 0.8rem; opacity: 0.7;">Based on the AI Capability Atlas — 71 capabilities across 13 categories</p>
+    </footer>
+</body>
+</html>
