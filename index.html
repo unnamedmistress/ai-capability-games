@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AI Capability Atlas — Learning Games</title>
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
@@ -154,6 +154,40 @@
         } catch {}
       };
       return [stored, setValue];
+    }
+
+    // Error Boundary
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+      componentDidCatch(error, errorInfo) {
+        console.error('Error caught by boundary:', error, errorInfo);
+      }
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div className="min-h-screen bg-dark flex items-center justify-center p-8">
+              <div className="bg-red-900/30 border border-red-500 rounded-lg p-8 max-w-md text-center">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h2 className="text-2xl font-bold text-red-300 mb-4">Something went wrong</h2>
+                <p className="text-red-200/70 mb-6">The game encountered an error. Try refreshing the page.</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition-colors"
+                >
+                  Reload Page
+                </button>
+              </div>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
     }
 
     // Navigation
@@ -524,10 +558,14 @@
             ctx.fillText(star.capability.icon, star.x, star.y);
           });
 
-          requestAnimationFrame(animate);
+          animationFrame = requestAnimationFrame(animate);
         };
 
         animate();
+        
+        return () => {
+          if (animationFrame) cancelAnimationFrame(animationFrame);
+        };
       }, [stars, connections, isDrawing, startStar, mousePos, unlockedCapabilities]);
 
       const handleMouseDown = (e) => {
@@ -976,10 +1014,10 @@
             <Navigation />
             <Routes>
               <Route path="/" element={<Hero />} />
-              <Route path="/labyrinth" element={<Labyrinth />} />
-              <Route path="/codex" element={<CelestialCodex />} />
-              <Route path="/progressorium" element={<Progressorium />} />
-              <Route path="/wheel" element={<WheelOfMisfortune />} />
+              <Route path="/labyrinth" element={<ErrorBoundary><Labyrinth /></ErrorBoundary>} />
+              <Route path="/codex" element={<ErrorBoundary><CelestialCodex /></ErrorBoundary>} />
+              <Route path="/progressorium" element={<ErrorBoundary><Progressorium /></ErrorBoundary>} />
+              <Route path="/wheel" element={<ErrorBoundary><WheelOfMisfortune /></ErrorBoundary>} />
             </Routes>
           </div>
         </BrowserRouter>
