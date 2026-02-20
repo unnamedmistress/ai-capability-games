@@ -30,6 +30,13 @@ const challenges = [
   }
 ];
 
+// Example for tutorial
+const tutorialExample = {
+  fragment: "I need a summary of our Q3 sales data",
+  correctSlot: 'P',
+  explanation: "This is the Purpose - it states what the user wants to achieve."
+};
+
 const lesson = LESSONS.find(l => l.slug === 'spec-lab');
 
 export default function SPECLab({ lessonId, onComplete }) {
@@ -37,11 +44,15 @@ export default function SPECLab({ lessonId, onComplete }) {
   const [available, setAvailable] = useState(challenges[0].fragments);
   const [isComplete, setIsComplete] = useState(false);
   const [showTutorial, setShowTutorial] = useState(true);
+  const [showExample, setShowExample] = useState(false);
+  const [showAnswers, setShowAnswers] = useState(false);
+  const [selectedFragment, setSelectedFragment] = useState(null);
 
   const moveToSlot = (fragment, slot) => {
     if (slots[slot].includes(fragment)) return;
     setSlots({ ...slots, [slot]: [...slots[slot], fragment] });
     setAvailable(available.filter(f => f !== fragment));
+    setSelectedFragment(null);
     setShowTutorial(false);
   };
 
@@ -62,6 +73,36 @@ export default function SPECLab({ lessonId, onComplete }) {
     );
     const xp = correct ? lesson.xp : Math.round(lesson.xp * 0.75);
     setIsComplete(true);
+  };
+
+  const handleShowAnswers = () => {
+    if (confirm('This will show you the correct answers. Use this to learn, then try again!')) {
+      setShowAnswers(true);
+      // Auto-fill all slots correctly
+      const correctSlots = { S: [], P: [], E: [], C: [] };
+      challenges[0].fragments.forEach(fragment => {
+        correctSlots[fragment.slot].push(fragment);
+      });
+      setSlots(correctSlots);
+      setAvailable([]);
+    }
+  };
+
+  const handleReset = () => {
+    if (confirm('Start over? All progress will be reset.')) {
+      setSlots({ S: [], P: [], E: [], C: [] });
+      setAvailable(challenges[0].fragments);
+      setShowAnswers(false);
+      setShowTutorial(true);
+    }
+  };
+
+  // Keyboard navigation
+  const handleKeyDown = (e, fragment) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setSelectedFragment(fragment);
+    }
   };
 
   if (isComplete) {
@@ -114,20 +155,84 @@ Limits: ${slots.C.map(f => f.text).join(', ')}`;
           <div className="mb-6 p-4 bg-blue-900/20 rounded-xl border border-blue-500/30">
             <div className="flex items-start gap-3">
               <span className="text-2xl">💡</span>
-              <div>
-                <h3 className="font-bold text-blue-400 mb-1">How to Play</h3>
-                <p className="text-gray-300 text-sm mb-2">
-                  <strong>Step 1:</strong> Read each fragment carefully.<br/>
-                  <strong>Step 2:</strong> Click a fragment to assign it to a SPEC slot.<br/>
-                  <strong>Step 3:</strong> Fill all 4 slots (S, P, E, C) with at least one fragment each.<br/>
-                  <strong>Tip:</strong> Click a fragment in a slot to remove it if you make a mistake.
+              <div className="flex-1">
+                <h3 className="font-bold text-blue-400 mb-2">How to Use SPEC Framework</h3>
+                <p className="text-gray-300 text-sm mb-3">
+                  SPEC helps you structure prompts clearly. Each letter represents a key component:
                 </p>
-                <button 
-                  onClick={() => setShowTutorial(false)}
-                  className="text-blue-400 text-sm underline hover:text-blue-300"
-                >
-                  Got it, hide this
-                </button>
+                <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+                  <div className="bg-purple-900/30 p-2 rounded border border-purple-500/30">
+                    <strong className="text-purple-400">S - Situation:</strong> Context and background
+                  </div>
+                  <div className="bg-pink-900/30 p-2 rounded border border-pink-500/30">
+                    <strong className="text-pink-400">P - Purpose:</strong> What you want to achieve
+                  </div>
+                  <div className="bg-amber-900/30 p-2 rounded border border-amber-500/30">
+                    <strong className="text-amber-400">E - Expectations:</strong> Format and style
+                  </div>
+                  <div className="bg-emerald-900/30 p-2 rounded border border-emerald-500/30">
+                    <strong className="text-emerald-400">C - Constraints:</strong> Limitations and rules
+                  </div>
+                </div>
+                
+                {/* Interactive Example */}
+                <div className="bg-gray-900/50 rounded-lg p-3 mb-3">
+                  <p className="text-gray-400 text-xs mb-2">🎯 Example:</p>
+                  <p className="text-white text-sm mb-2">"{tutorialExample.fragment}"</p>
+                  <p className="text-green-400 text-xs">
+                    ✓ This goes in <strong>{tutorialExample.correctSlot} - {specLabels[tutorialExample.correctSlot].name}</strong><br/>
+                    <span className="text-gray-400">{tutorialExample.explanation}</span>
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setShowTutorial(false)}
+                    className="text-blue-400 text-sm underline hover:text-blue-300"
+                  >
+                    Got it, start playing
+                  </button>
+                  <span className="text-gray-600">•</span>
+                  <button 
+                    onClick={() => setShowExample(true)}
+                    className="text-blue-400 text-sm underline hover:text-blue-300"
+                  >
+                    See full example
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Full Example Modal */}
+        {showExample && (
+          <div className="mb-6 p-4 bg-green-900/20 rounded-xl border border-green-500/30">
+            <div className="flex justify-between items-start mb-3">
+              <h3 className="font-bold text-green-400">📚 Complete SPEC Example</h3>
+              <button 
+                onClick={() => setShowExample(false)}
+                className="text-gray-500 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="bg-purple-900/20 p-3 rounded border-l-4 border-purple-500">
+                <strong className="text-purple-400">S - Situation:</strong>
+                <p className="text-gray-300">"I'm a marketing manager at a SaaS startup preparing for a product launch. We have 3 competitors in the space."</p>
+              </div>
+              <div className="bg-pink-900/20 p-3 rounded border-l-4 border-pink-500">
+                <strong className="text-pink-400">P - Purpose:</strong>
+                <p className="text-gray-300">"I need a competitive analysis comparing our features to the top 2 competitors."</p>
+              </div>
+              <div className="bg-amber-900/20 p-3 rounded border-l-4 border-amber-500">
+                <strong className="text-amber-400">E - Expectations:</strong>
+                <p className="text-gray-300">"Create a comparison table with pros/cons for each, written in professional business language."</p>
+              </div>
+              <div className="bg-emerald-900/20 p-3 rounded border-l-4 border-emerald-500">
+                <strong className="text-emerald-400">C - Constraints:</strong>
+                <p className="text-gray-300">"Keep it under 500 words. Focus on features, not pricing."</p>
               </div>
             </div>
           </div>
@@ -151,14 +256,11 @@ Limits: ${slots.C.map(f => f.text).join(', ')}`;
                 {available.map((fragment, i) => (
                   <button
                     key={i}
-                    onClick={() => {
-                      // Show slot selection modal or dropdown
-                      const slot = prompt(`Where should "${fragment.text}" go?\n\nS = Situation\nP = Purpose\nE = Expectations\nC = Constraints`);
-                      if (slot && ['S', 'P', 'E', 'C'].includes(slot.toUpperCase())) {
-                        moveToSlot(fragment, slot.toUpperCase());
-                      }
-                    }}
-                    className="bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white hover:border-purple-500 hover:bg-gray-800 transition-all text-left"
+                    onClick={() => setSelectedFragment(fragment)}
+                    onKeyDown={(e) => handleKeyDown(e, fragment)}
+                    tabIndex={0}
+                    className="bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-sm text-white hover:border-purple-500 hover:bg-gray-800 transition-all text-left focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    aria-label={`Fragment: ${fragment.text}. Press Enter to categorize.`}
                   >
                     {fragment.text}
                   </button>
@@ -167,7 +269,7 @@ Limits: ${slots.C.map(f => f.text).join(', ')}`;
             )}
             
             <p className="text-gray-500 text-xs mt-4">
-              💡 Click any fragment to assign it to a SPEC slot
+              💡 Click any fragment to assign it to a SPEC slot. Use Tab to navigate, Enter to select.
             </p>
           </div>
 
@@ -177,14 +279,47 @@ Limits: ${slots.C.map(f => f.text).join(', ')}`;
             <div className="bg-gray-900 rounded-lg p-4 text-sm text-gray-300 whitespace-pre-wrap font-mono min-h-[120px]">
               {getPreviewText()}
             </div>
-            <div className="mt-3 flex gap-2 text-xs text-gray-500">
-              <span className={slots.S.length > 0 ? 'text-green-400' : ''}>● S</span>
-              <span className={slots.P.length > 0 ? 'text-green-400' : ''}>● P</span>
-              <span className={slots.E.length > 0 ? 'text-green-400' : ''}>● E</span>
-              <span className={slots.C.length > 0 ? 'text-green-400' : ''}>● C</span>
+            <div className="mt-3 flex gap-2 text-xs">
+              <span className={slots.S.length > 0 ? 'text-green-400' : 'text-gray-600'}>● S</span>
+              <span className={slots.P.length > 0 ? 'text-green-400' : 'text-gray-600'}>● P</span>
+              <span className={slots.E.length > 0 ? 'text-green-400' : 'text-gray-600'}>● E</span>
+              <span className={slots.C.length > 0 ? 'text-green-400' : 'text-gray-600'}>● C</span>
             </div>
           </div>
         </div>
+
+        {/* Fragment Selection Modal */}
+        {selectedFragment && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700">
+              <h3 className="text-lg font-bold text-white mb-2">Categorize this fragment:</h3>
+              <p className="text-gray-300 mb-4">"{selectedFragment.text}"</p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                {specSlots.map(slot => {
+                  const label = specLabels[slot];
+                  return (
+                    <button
+                      key={slot}
+                      onClick={() => moveToSlot(selectedFragment, slot)}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${label.bg} ${label.border} hover:opacity-80`}
+                    >
+                      <span className={`font-bold ${label.color}`}>{slot} - {label.name}</span>
+                      <p className="text-xs text-gray-400 mt-1">{label.desc}</p>
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <button
+                onClick={() => setSelectedFragment(null)}
+                className="w-full mt-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-white"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* SPEC Slots */}
         <div className="grid grid-cols-2 gap-4 mt-6">
@@ -210,6 +345,7 @@ Limits: ${slots.C.map(f => f.text).join(', ')}`;
                       key={i}
                       onClick={() => removeFromSlot(fragment, slot)}
                       className="w-full text-left bg-gray-800 hover:bg-red-900/30 rounded px-3 py-2 text-sm text-white transition-all group"
+                      title="Click to remove"
                     >
                       <span className="group-hover:hidden">{fragment.text}</span>
                       <span className="hidden group-hover:inline text-red-400">✗ Click to remove</span>
@@ -227,25 +363,51 @@ Limits: ${slots.C.map(f => f.text).join(', ')}`;
           })}
         </div>
 
-        {/* Complete Button */}
-        <button
-          onClick={handleComplete}
-          disabled={!allCorrect()}
-          className={`w-full mt-6 py-4 rounded-xl font-bold transition-all ${
-            allCorrect() 
-              ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-900/50 transform hover:scale-[1.02]' 
-              : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-          }`}
-        >
-          {allCorrect() 
-            ? `✓ Complete Lab (+${lesson.xp} XP)` 
-            : `Fill all 4 SPEC slots with correct categories (${Object.values(slots).flat().length}/12 placed)`
-          }
-        </button>
+        {/* Action Buttons */}
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={handleComplete}
+            disabled={!allCorrect()}
+            className={`flex-1 py-4 rounded-xl font-bold transition-all ${
+              allCorrect() 
+                ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white shadow-lg shadow-purple-900/50 transform hover:scale-[1.02]' 
+                : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+            }`}
+          >
+            {allCorrect() 
+              ? `✓ Complete Lab (+${lesson.xp} XP)` 
+              : `Fill all 4 SPEC slots (${Object.values(slots).flat().length}/12 placed)`
+            }
+          </button>
+          
+          {!showAnswers && (
+            <button
+              onClick={handleShowAnswers}
+              className="px-4 py-4 bg-amber-900/30 border border-amber-500/50 text-amber-400 hover:bg-amber-900/50 rounded-xl font-bold transition-colors"
+              title="Show correct answers (for learning)"
+            >
+              💡 Show Answers
+            </button>
+          )}
+          
+          <button
+            onClick={handleReset}
+            className="px-4 py-4 bg-gray-700 hover:bg-gray-600 rounded-xl font-bold text-white transition-colors"
+            title="Start over"
+          >
+            🔄 Reset
+          </button>
+        </div>
         
-        {!allCorrect() && Object.values(slots).flat().length > 0 && (
+        {!allCorrect() && Object.values(slots).flat().length > 0 && !showAnswers && (
           <p className="text-center text-amber-400 text-sm mt-3">
-            ⚠️ Some fragments may be in the wrong slots. Check your work!
+            ⚠️ Some fragments may be in the wrong slots. Try rearranging, or use "Show Answers" to learn.
+          </p>
+        )}
+        
+        {showAnswers && (
+          <p className="text-center text-green-400 text-sm mt-3">
+            ✓ Answers revealed! This is for learning - try to understand why each fragment belongs where it does.
           </p>
         )}
       </div>

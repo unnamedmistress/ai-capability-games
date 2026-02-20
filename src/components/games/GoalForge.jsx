@@ -15,32 +15,58 @@ export default function GoalForge({ lessonId, onComplete }) {
   const [fields, setFields] = useState({ need: '', for: '', by: '' });
   const [qualityTest, setQualityTest] = useState('');
   const [quality, setQuality] = useState(0);
+  const [scoreBreakdown, setScoreBreakdown] = useState(null);
   const [showExamples, setShowExamples] = useState(true);
   const [showTutorial, setShowTutorial] = useState(true);
+  const [showScoringInfo, setShowScoringInfo] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
 
   const calculateQuality = () => {
     let score = 0;
+    const breakdown = {
+      needWords: 0,
+      forWords: 0,
+      byWords: 0,
+      properNouns: 0,
+      deadline: 0,
+      qualityBonus: 0
+    };
+    
     const { need, for: forVal, by } = fields;
     
     // Word count (max 30 pts per field)
-    score += Math.min(30, need.split(' ').filter(w => w.length > 0).length * 3);
-    score += Math.min(30, forVal.split(' ').filter(w => w.length > 0).length * 3);
-    score += Math.min(30, by.split(' ').filter(w => w.length > 0).length * 3);
+    const needWordCount = need.split(' ').filter(w => w.length > 0).length;
+    const forWordCount = forVal.split(' ').filter(w => w.length > 0).length;
+    const byWordCount = by.split(' ').filter(w => w.length > 0).length;
+    
+    breakdown.needWords = Math.min(30, needWordCount * 3);
+    breakdown.forWords = Math.min(30, forWordCount * 3);
+    breakdown.byWords = Math.min(30, byWordCount * 3);
+    
+    score += breakdown.needWords + breakdown.forWords + breakdown.byWords;
     
     // Proper noun detection (capitalized words suggest specificity)
     const allText = `${need} ${forVal} ${by}`;
     const properNouns = allText.match(/\b[A-Z][a-z]+\b/g) || [];
-    score += Math.min(15, properNouns.length * 3);
+    breakdown.properNouns = Math.min(15, properNouns.length * 3);
+    score += breakdown.properNouns;
     
     // Date/deadline detection
     const hasDate = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|next week|by \d|deadline|due|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(by);
-    if (hasDate) score += 15;
+    if (hasDate) {
+      breakdown.deadline = 15;
+      score += 15;
+    }
     
     // Quality test bonus
-    if (qualityTest.length > 10) score += 15;
+    if (qualityTest.length > 10) {
+      breakdown.qualityBonus = 15;
+      score += 15;
+    }
     
-    setQuality(Math.min(100, score));
+    const finalScore = Math.min(100, score);
+    setQuality(finalScore);
+    setScoreBreakdown(breakdown);
   };
 
   useEffect(() => {
@@ -58,6 +84,7 @@ export default function GoalForge({ lessonId, onComplete }) {
       setFields({ need: '', for: '', by: '' });
       setQualityTest('');
       setQuality(0);
+      setScoreBreakdown(null);
     }
   };
 
@@ -106,6 +133,15 @@ export default function GoalForge({ lessonId, onComplete }) {
                   Vague goals lead to vague results. Use the <strong>"I need ___, for ___, by ___"</strong> framework 
                   to give AI (and yourself) clear direction.
                 </p>
+                <div className="bg-gray-900/50 rounded-lg p-3 mb-3">
+                  <p className="text-gray-400 text-xs mb-2">📊 How your score is calculated:</p>
+                  <ul className="text-gray-300 text-xs space-y-1">
+                    <li>• Specificity: More descriptive words = more points (max 30 per field)</li>
+                    <li>• Detail: Using proper nouns (names, brands) adds points</li>
+                    <li>• Deadline: Including a specific date/time adds bonus points</li>
+                    <li>• Quality criteria: Defining success adds bonus points</li>
+                  </ul>
+                </div>
                 <button 
                   onClick={() => setShowTutorial(false)}
                   className="text-blue-400 text-sm underline hover:text-blue-300"
@@ -145,14 +181,23 @@ export default function GoalForge({ lessonId, onComplete }) {
           )}
         </div>
 
-        {/* Quality Meter */}
+        {/* Quality Meter with Scoring Breakdown */}
         <div className="mb-8 bg-gray-800/50 rounded-xl p-4 border border-gray-700">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-400 text-sm">Goal Quality Score</span>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-sm">Goal Quality Score</span>
+              <button
+                onClick={() => setShowScoringInfo(!showScoringInfo)}
+                className="w-5 h-5 rounded-full bg-gray-700 text-gray-400 text-xs hover:bg-blue-600 hover:text-white transition-colors"
+                title="How is this calculated?"
+              >
+                ?
+              </button>
+            </div>
             <div className="text-right">
-              <span className={`text-2xl font-bold ${getQualityColor()}`}>{quality}</span>
+              <span className="text-2xl font-bold {getQualityColor()}">{quality}</span>
               <span className="text-gray-600">/100</span>
-              <p className={`text-xs ${getQualityColor()}`}>{getQualityLabel()}</p>
+              <p className={`text-xs {getQualityColor()}`}>{getQualityLabel()}</p>
             </div>
           </div>
           <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
@@ -165,6 +210,42 @@ export default function GoalForge({ lessonId, onComplete }) {
               style={{ width: `${quality}%` }}
             />
           </div>
+          
+          {/* Scoring Breakdown */}
+          {showScoringInfo && scoreBreakdown && (
+            <div className="mt-4 p-3 bg-gray-900/50 rounded-lg">
+              <p className="text-gray-400 text-xs mb-2">📊 Score Breakdown:</p>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="flex justify-between">
+                  <span className="text-gray-500">"I need" specificity:</span>
+                  <span className="text-purple-400">+{scoreBreakdown.needWords}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">"for" context:</span>
+                  <span className="text-purple-400">+{scoreBreakdown.forWords}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">"by" deadline:</span>
+                  <span className="text-purple-400">+{scoreBreakdown.byWords}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Detail (proper nouns):</span>
+                  <span className="text-purple-400">+{scoreBreakdown.properNouns}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Date specified:</span>
+                  <span className="text-purple-400">+{scoreBreakdown.deadline}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Success criteria:</span>
+                  <span className="text-purple-400">+{scoreBreakdown.qualityBonus}</span>
+                </div>
+              </div>
+              <p className="text-gray-500 text-xs mt-2 italic">
+                💡 Tip: Add more descriptive words, specific names, and clear deadlines to increase your score.
+              </p>
+            </div>
+          )}
           
           {quality >= 70 && (
             <div className="mt-3 p-3 bg-green-900/20 rounded-lg border border-green-500/30">
@@ -232,7 +313,7 @@ export default function GoalForge({ lessonId, onComplete }) {
               className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             />
             <p className="text-gray-500 text-xs mt-2">
-              Specific dates help with urgency and scope
+              Specific dates help with urgency and scope (+15 bonus points!)
             </p>
           </div>
         </div>

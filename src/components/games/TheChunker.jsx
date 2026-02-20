@@ -43,6 +43,7 @@ export default function TheChunker({ lessonId, onComplete }) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [wasCorrect, setWasCorrect] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(true);
 
   const task = tasks[currentIndex];
   const progress = ((currentIndex) / tasks.length) * 100;
@@ -68,7 +69,7 @@ export default function TheChunker({ lessonId, onComplete }) {
       } else {
         setIsComplete(true);
       }
-    }, 2500);
+    }, 3000);
   };
 
   if (isComplete) {
@@ -94,6 +95,50 @@ export default function TheChunker({ lessonId, onComplete }) {
       />
       
       <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Tutorial - Why Chunking Matters */}
+        {showTutorial && (
+          <div className="mb-6 p-4 bg-blue-900/20 rounded-xl border border-blue-500/30">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">🧠</span>
+              <div>
+                <h3 className="font-bold text-blue-400 mb-2">Why Chunking Matters</h3>
+                <p className="text-gray-300 text-sm mb-3">
+                  <strong>Cognitive Load Theory:</strong> Both humans and AI have limited working memory. 
+                  When we try to process too much at once, we experience cognitive overload.
+                </p>
+                <div className="bg-gray-900/50 rounded-lg p-3 mb-3 text-sm">
+                  <p className="text-gray-400 mb-2"><strong>Miller's Magic Number:</strong> 7 ± 2 items</p>
+                  <p className="text-gray-300">
+                    Humans can typically hold 5-9 chunks of information in working memory at once. 
+                    AI models have token limits. Breaking tasks into 2-4 natural chunks prevents overload 
+                    and improves output quality.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="bg-red-900/30 p-2 rounded text-center">
+                    <span className="text-red-400 font-bold block mb-1">Too Few</span>
+                    <span className="text-gray-400">Cognitive overload</span>
+                  </div>
+                  <div className="bg-green-900/30 p-2 rounded text-center">
+                    <span className="text-green-400 font-bold block mb-1">Just Right</span>
+                    <span className="text-gray-400">Optimal processing</span>
+                  </div>
+                  <div className="bg-yellow-900/30 p-2 rounded text-center">
+                    <span className="text-yellow-400 font-bold block mb-1">Too Many</span>
+                    <span className="text-gray-400">Fragmented focus</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowTutorial(false)}
+                  className="text-blue-400 text-sm underline hover:text-blue-300 mt-3"
+                >
+                  Got it, start chunking
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Progress */}
         <div className="mb-6">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
@@ -153,8 +198,8 @@ export default function TheChunker({ lessonId, onComplete }) {
           <p className={`text-xs mt-2 text-center font-medium
             ${cognitiveLoad === 'optimal' ? 'text-green-400' :
               cognitiveLoad === 'high' ? 'text-red-400' : 'text-yellow-400'}`}>
-            {cognitiveLoad === 'optimal' ? 'Optimal chunking' :
-             cognitiveLoad === 'high' ? 'OVERLOAD: Too much per chunk' : 'FRAGMENTATION: Too many small chunks'}
+            {cognitiveLoad === 'optimal' ? 'Optimal chunking - Good balance!' :
+             cognitiveLoad === 'high' ? 'OVERLOAD: Too much information per chunk' : 'FRAGMENTATION: Too many small pieces'}
           </p>
         </div>
 
@@ -162,18 +207,26 @@ export default function TheChunker({ lessonId, onComplete }) {
         <button
           onClick={() => handleSelect(selected)}
           disabled={showFeedback}
-          className="w-full py-4 bg-gradient-to-r from-pink-600 to-rose-600 rounded-xl font-bold text-white disabled:opacity-50"
+          className="w-full py-4 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 rounded-xl font-bold text-white disabled:opacity-50 transition-all"
         >
-          {showFeedback ? 'Next...' : 'Submit'}
+          {showFeedback ? 'Next Task...' : 'Submit Chunking Strategy'}
         </button>
 
         {/* Feedback */}
         {showFeedback && (
-          <div className={`mt-6 p-4 rounded-xl border ${wasCorrect ? 'bg-green-900/30 border-green-500' : 'bg-red-900/30 border-red-500'}`}>
-            <p className={`font-bold mb-2 ${wasCorrect ? 'text-green-400' : 'text-red-400'}`}>
-              {wasCorrect ? '✓ Optimal chunking!' : `✗ Optimal was ${task.optimalChunks} chunks`}
+          <div className={`mt-6 p-4 rounded-xl border ${wasCorrect ? 'bg-green-900/30 border-green-500' : 'bg-amber-900/30 border-amber-500'}`}>
+            <p className={`font-bold mb-2 ${wasCorrect ? 'text-green-400' : 'text-amber-400'}`}>
+              {wasCorrect ? '✓ Optimal chunking!' : `💡 Optimal was ${task.optimalChunks} chunks`}
             </p>
-            <p className="text-gray-300 text-sm">{task.explanation}</p>
+            <p className="text-gray-300 text-sm mb-3">{task.explanation}</p>
+            {!wasCorrect && (
+              <div className="bg-gray-900/50 rounded-lg p-3 text-sm">
+                <p className="text-gray-400">
+                  <strong>Learning tip:</strong> Look for natural boundaries in the text - 
+                  shifts from findings to actions, from learning to doing, or from one phase to another.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
