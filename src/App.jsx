@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { useProgress } from './hooks/useProgress'
 import Navigation from './components/Navigation'
 import Hero from './components/Hero'
+import LessonBrowser from './components/LessonBrowser'
 import Labyrinth from './components/Labyrinth'
 import CelestialCodex from './components/CelestialCodex'
 import Progressorium from './components/Progressorium'
@@ -12,13 +13,8 @@ import LessonRouter from './components/LessonRouter'
 function App() {
   const { progress, level, completedCount, progressPercent, completeLesson, hasCompleted } = useProgress()
 
-  const handleLessonComplete = (xpEarned) => {
-    // This will be called with lessonId from the game component
-    // Need to track current lesson in state or URL
-  }
-
   return (
-    <div className="min-h-screen bg-dark text-white">
+    <div className="min-h-screen bg-gray-900 text-white">
       <Navigation progress={progress} level={level} completedCount={completedCount} />
       <Routes>
         <Route path="/" element={
@@ -30,6 +26,7 @@ function App() {
             hasCompleted={hasCompleted}
           />
         } />
+        <Route path="/lessons" element={<LessonBrowser />} />
         <Route path="/labyrinth" element={<Labyrinth />} />
         <Route path="/codex" element={<CelestialCodex />} />
         <Route path="/progressorium" element={<Progressorium />} />
