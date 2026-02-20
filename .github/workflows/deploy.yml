@@ -32,13 +32,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Handle client-side routing
-        run: |
-          cp dist/index.html dist/404.html
-          echo "/* /index.html 200" > dist/_redirects
-          echo "Files in dist after copy:"
-          ls -la dist/
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
