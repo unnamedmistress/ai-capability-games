@@ -32,6 +32,33 @@ const outputs = [
 
 const dimensions = ['Accuracy', 'Clarity', 'Tone', 'Completeness'];
 
+const dimensionHelp = {
+  Accuracy: {
+    title: 'Accuracy',
+    desc: 'Are facts, figures, and claims correct and verifiable?',
+    pass: 'Data is correct, sources cited, no false claims',
+    fail: 'Wrong numbers, unsubstantiated claims, factual errors'
+  },
+  Clarity: {
+    title: 'Clarity',
+    desc: 'Is the writing easy to understand with clear structure?',
+    pass: 'Well-organized, precise language, logical flow',
+    fail: 'Jargon-heavy, confusing structure, vague wording'
+  },
+  Tone: {
+    title: 'Tone',
+    desc: 'Is the tone appropriate for the audience and context?',
+    pass: 'Professional, respectful, matches audience expectations',
+    fail: 'Too casual, overly promotional, blaming, or unprofessional'
+  },
+  Completeness: {
+    title: 'Completeness',
+    desc: 'Does it include all necessary information without gaps?',
+    pass: 'All key points covered, context provided, nothing missing',
+    fail: 'Missing critical details, lacks context, incomplete analysis'
+  }
+};
+
 const lesson = LESSONS.find(l => l.slug === 'the-crucible');
 
 export default function TheCrucible({ lessonId, onComplete }) {
@@ -41,6 +68,8 @@ export default function TheCrucible({ lessonId, onComplete }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [helpDim, setHelpDim] = useState(null);
+  const [showTutorial, setShowTutorial] = useState(true);
 
   const currentOutput = outputs[currentIndex];
   const currentRatings = ratings[currentIndex];
@@ -64,7 +93,7 @@ export default function TheCrucible({ lessonId, onComplete }) {
         ? 'bg-green-900/30 border-green-500 text-green-400'
         : val === false
           ? 'bg-red-900/30 border-red-500 text-red-400'
-          : 'bg-gray-800 border-gray-700 text-gray-400';
+          : 'bg-gray-800 border-gray-700 text-gray-400 hover:border-gray-600';
     }
     
     // Show feedback
@@ -127,11 +156,36 @@ export default function TheCrucible({ lessonId, onComplete }) {
       />
       
       <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Tutorial */}
+        {showTutorial && (
+          <div className="mb-6 p-4 bg-blue-900/20 rounded-xl border border-blue-500/30">
+            <div className="flex items-start gap-3">
+              <span className="text-2xl">💡</span>
+              <div className="flex-1">
+                <h3 className="font-bold text-blue-400 mb-2">How to Evaluate AI Output</h3>
+                <p className="text-gray-300 text-sm mb-2">
+                  Read the text below and evaluate it on 4 dimensions. Click the <strong>?</strong> icon on any dimension to learn what it means.
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                  <span>✓ = PASS (meets standards)</span>
+                  <span>✗ = FAIL (needs improvement)</span>
+                </div>
+                <button 
+                  onClick={() => setShowTutorial(false)}
+                  className="text-blue-400 text-sm underline hover:text-blue-300 mt-2"
+                >
+                  Got it, hide this
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Progress */}
         <div className="mb-6">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
             <span>Output {currentIndex + 1} of {outputs.length}</span>
-            {showResults && <span>{correctCount}/4 dimensions correct</span>}
+            {showResults && <span className={correctCount >= 3 ? 'text-green-400' : 'text-amber-400'}>{correctCount}/4 correct</span>}
           </div>
           <div className="h-2 bg-gray-800 rounded-full">
             <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
@@ -140,35 +194,77 @@ export default function TheCrucible({ lessonId, onComplete }) {
 
         {/* Output Text */}
         <div className="bg-gray-800/50 rounded-2xl p-6 mb-6 border border-gray-700">
+          <p className="text-gray-500 text-xs uppercase tracking-wider mb-2">AI Output to Evaluate</p>
           <p className="text-gray-300 leading-relaxed italic">"{currentOutput.text}"</p>
         </div>
 
         {/* Dimensions */}
         <p className="text-gray-400 mb-4 text-center">
-          {showResults ? 'Expert rubric shown below:' : 'Toggle PASS (✓) or FAIL (✗) for each dimension:'}
+          {showResults ? 'Expert evaluation shown below:' : 'Click each dimension to rate PASS or FAIL:'}
         </p>
         
         <div className="grid grid-cols-2 gap-3 mb-6">
           {dimensions.map(dim => (
-            <button
-              key={dim}
-              onClick={() => toggleDimension(dim)}
-              disabled={showResults}
-              className={`p-4 rounded-xl border-2 text-left transition-all disabled:cursor-default
-                ${getDimensionStyle(dim)}`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-bold">{dim}</span>
-                {currentRatings[dim] === true && <span>✓</span>}
-                {currentRatings[dim] === false && <span>✗</span>}
-                {currentRatings[dim] === null && <span className="text-gray-600">?</span>}
-              </div>
-              {showResults && (
-                <p className="text-xs mt-2 opacity-80">
-                  {currentOutput.expert[dim] ? 'Expert: PASS' : 'Expert: FAIL'}
-                </p>
+            <div key={dim} className="relative">
+              <button
+                onClick={() => toggleDimension(dim)}
+                disabled={showResults}
+                className={`w-full p-4 rounded-xl border-2 text-left transition-all disabled:cursor-default
+                  ${getDimensionStyle(dim)}`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold">{dim}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setHelpDim(helpDim === dim ? null : dim);
+                      }}
+                      className="w-5 h-5 rounded-full bg-gray-700 text-gray-400 text-xs hover:bg-blue-600 hover:text-white transition-colors"
+                      title="What does this mean?"
+                    >
+                      ?
+                    </button>
+                  </div>
+                  <span className="text-lg">
+                    {currentRatings[dim] === true && '✓'}
+                    {currentRatings[dim] === false && '✗'}
+                    {currentRatings[dim] === null && '○'}
+                  </span>
+                </div>
+                {showResults && (
+                  <p className={`text-xs mt-2 ${currentRatings[dim] === currentOutput.expert[dim] ? 'text-green-400' : 'text-red-400'}`}>
+                    {currentOutput.expert[dim] ? '✓ Expert says PASS' : '✗ Expert says FAIL'}
+                  </p>
+                )}
+              </button>
+              
+              {/* Help Tooltip */}
+              {helpDim === dim && (
+                <div className="absolute z-10 top-full left-0 right-0 mt-2 p-4 bg-gray-900 rounded-xl border-2 border-blue-500 shadow-xl">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-blue-400">{dimensionHelp[dim].title}</h4>
+                    <button 
+                      onClick={() => setHelpDim(null)}
+                      className="text-gray-500 hover:text-white"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <p className="text-gray-300 text-sm mb-3">{dimensionHelp[dim].desc}</p>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-start gap-2">
+                      <span className="text-green-400">✓</span>
+                      <span className="text-gray-400">PASS: {dimensionHelp[dim].pass}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-red-400">✗</span>
+                      <span className="text-gray-400">FAIL: {dimensionHelp[dim].fail}</span>
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
           ))}
         </div>
 
@@ -176,17 +272,28 @@ export default function TheCrucible({ lessonId, onComplete }) {
         <button
           onClick={handleSubmit}
           disabled={!allRated}
-          className="w-full py-4 bg-gradient-to-r from-orange-600 to-red-600 rounded-xl font-bold text-white disabled:opacity-50"
+          className={`w-full py-4 rounded-xl font-bold transition-all ${
+            allRated 
+              ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white shadow-lg shadow-orange-900/50 transform hover:scale-[1.02]' 
+              : 'bg-gray-800 text-gray-600 cursor-not-allowed'
+          }`}
         >
           {showResults 
-            ? (currentIndex < outputs.length - 1 ? 'Next Output →' : 'See Results')
+            ? (currentIndex < outputs.length - 1 ? 'Next Output →' : 'See Final Results')
             : 'Submit Evaluation'
           }
         </button>
+        
+        {!allRated && (
+          <p className="text-center text-gray-500 text-sm mt-3">
+            Rate all 4 dimensions to continue
+          </p>
+        )}
 
         {/* Feedback */}
         {showResults && (
           <div className="mt-6 p-4 rounded-xl border bg-gray-800/50 border-gray-600">
+            <h4 className="font-bold text-white mb-2">💡 Expert Explanation</h4>
             <p className="text-gray-300 text-sm">{currentOutput.explanation}</p>
           </div>
         )}
